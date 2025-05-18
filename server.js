@@ -49,7 +49,7 @@ const italianBrainrotVoice = new ElevenLabs({
 
 const pirateVoice = new ElevenLabs({
     apiKey: process.env.ELEVENLABS_API_KEY,
-    voiceId: "PPzYpIqttlTYA83688JI"
+    voiceId: "tFEwp2OEgyZc3b1eWZ7e"
 });
 
 const shakespeareVoice = new ElevenLabs({
@@ -106,9 +106,7 @@ function getVoiceSettings(style) {
             return {
                 voiceId: pirateVoice.voiceId,
                 params: {
-                    stability: 0.7,
-                    similarity_boost: 0.8,
-                    style: 1
+                    speed: 1
                 }
             };
             
@@ -134,19 +132,29 @@ function getVoiceSettings(style) {
                 }
             };
 
-        case "ukrainian_man":
+        case "matter_of_fact":
             return {
-                voiceId: ukrainianManVoice.voiceId,
+                voiceId: matterOfFactVoice.voiceId,
                 params: {
-                    stability: 0.4,
+                    stability: 0.7,
                     similarity_boost: 0.8,
-                    style: 0.7,
-                    speed: 0.8,
-                    speaker_boost: true
+                    style: 0,
+                    speed: 0.95
                 }
             };
 
-        case "matter_of_fact":
+        case "robot_historian":
+            return {
+                voiceId: matterOfFactVoice.voiceId,
+                params: {
+                    stability: 0.7,
+                    similarity_boost: 0.8,
+                    style: 0,
+                    speed: 0.95
+                }
+            };
+
+        case "conspiracy_theorist":
             return {
                 voiceId: matterOfFactVoice.voiceId,
                 params: {
@@ -168,6 +176,7 @@ function getVoiceSettings(style) {
                     speed: 0.9
                 }
             };
+            
             
     }
 }
@@ -226,143 +235,249 @@ app.post('/api/generate-speech', async (req, res) => {
 
 
 app.post('/api/generate-image', async (req, res) => {
-    const { event, style } = req.body;
-  
-    try {
-        //const prompt = `Historical ${style} style depiction of ${event}`;
+    const { event } = req.body;
 
-        const prompt = `Realistic high quality photo depiction of historical event: ${event}`;
-        
-        //  DALL-E parameters:
+    try {
+        // 1. Generate a policy-safe but accurate prompt
+        const promptGenerationResponse = await axios.post(
+    'https://api.deepseek.com/v1/chat/completions',
+    {
+        model: "deepseek-chat",
+        messages: [{
+            role: "system",
+            content: `Transform user requests into a DALL-E image prompt by following these rules:
+            - If the request is about a person (including historical figures), generate a visual description that accurately matches their known physical appearance without using their name. Include details such as age, height, facial features, hairstyle, typical clothing, and the environment they are commonly associated with.
+            - If the request is about a historical event — especially a sensitive one such as a disaster, attack, or violent conflict — rewrite the prompt using neutral, non-graphic language. Focus on describing the scene in objective, visually appropriate terms to reduce the chance of rejection by DALL-E's content filters.
+            Your goal is to generate a safe, descriptive, and visually rich prompt that DALL-E will accept. Do not include people names or sensitive terms.`
+                    }, {
+            role: "user",
+            content: `Create a DALL-E prompt for: ${event}`
+        }],
+        temperature: 0.4,  // Slightly higher for better creativity
+        max_tokens: 200
+    },
+    {
+        headers: {
+            "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+            "Content-Type": "application/json"
+        }
+    }
+);
+
+
+        let prompt = promptGenerationResponse.data.choices[0].message.content;
+        prompt = prompt.slice(0, 900);
+
+        //console.log("Final prompt:", prompt);
+
+        // 2. Generate image
         const response = await openai.images.generate({
             model: "dall-e-2",
-            prompt: prompt+", in an educational, and historical style, with no graphic content",
-            //quality: "hd", //remove when using dall-e-2
-            //style: "natural", //natural or vivid (dall-e-3 only)
-            size: "256x256", // Only supported sizes: 256x256, 512x512, 1024x1024
-            n: 1,
-            response_format: "url"
+            prompt: prompt,
+            size: "256x256",
+            n: 1
         });
 
-        res.json({ 
-            imageUrl: response.data[0].url 
+        res.json({
+            imageUrl: response.data[0].url,
+            promptUsed: prompt
         });
-        
+
     } catch (error) {
-        console.error("DALL-E Error:", error);
-        res.status(500).json({ 
-            error: "Image generation failed",
-            details: error.message 
+        console.error("Error:", error.response?.data || error.message);
+        res.status(500).json({
+            error: "Failed to generate image",
+            details: error.response?.data || error.message
         });
     }
 });
+
+// Add this new endpoint to server.js
+app.post('/api/generate-image2', async (req, res) => {
+    const { event } = req.body;
+
+    try {
+        // Generate a different variation of the prompt
+        const promptGenerationResponse = await axios.post(
+            'https://api.deepseek.com/v1/chat/completions',
+            {
+                model: "deepseek-chat",
+                messages: [{
+                    role: "system",
+                    content: `Create a DIFFERENT visual interpretation of the requested event. Rules:
+                    - Generate an alternative perspective or composition
+                    - Use different visual elements than the first image
+                    - Maintain historical accuracy but with creative variation
+                    - Keep the same safety guidelines as the first image prompt
+                    - Never include any harmful, violent, or inappropriate content`
+                }, {
+                    role: "user",
+                    content: `Create a DALL-E prompt for: ${event}`
+                }],
+                temperature: 0.6,
+                max_tokens: 200
+            },
+            {
+                headers: {
+                    "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`,
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        let prompt = promptGenerationResponse.data.choices[0].message.content;
+        prompt = prompt.slice(0, 900).trim();
+
+        // Validate prompt
+        if (!prompt || prompt.length < 10) {
+            throw new Error('Generated prompt is too short or empty');
+        }
+
+        console.log("Image 2 prompt:", prompt);
+
+        // Generate image with additional safety checks
+        const response = await openai.images.generate({
+            model: "dall-e-2",
+            prompt: prompt,
+            size: "256x256",
+            n: 1
+        });
+
+        // Validate response
+        if (!response.data || !response.data[0] || !response.data[0].url) {
+            throw new Error('Invalid response from DALL-E API');
+        }
+
+        res.json({
+            imageUrl: response.data[0].url,
+            promptUsed: prompt
+        });
+
+    } catch (error) {
+        console.error("Detailed error generating image 2:", {
+            message: error.message,
+            response: error.response?.data,
+            stack: error.stack
+        });
+        
+        res.status(500).json({
+            error: "Failed to generate second image",
+            details: error.response?.data || error.message,
+            suggestion: "The content might have triggered DALL-E's safety filters. Try a different event description."
+        });
+    }
+});
+
 
 
 app.post('/api/describe-event', async (req, res) => {
     const { event, style } = req.body;
   
     // Base rules for ALL styles
-    let prompt = `Describe "${event}" in ${style} style. Rules:\n` +
-                 `- No asterisks or dashes (-)\n` +
-                 `- Don't use quotation marks\n` +
-                 `- Don't use asterisks\n` +
-                 `- do not answer with asterisks in any case. never use asterisks in the answer.\n` +
-                 `- Use era-appropriate slang naturally\n` +
-                 //`- 1 concise paragraph (2-3 sentences)\n` +
-                 `- 1 sentence (9-13 words)\n` +
-                 //`- just describe it in 3 words\n` +
-                 `Style and Dialect Library to Use:\n`;
+    let prompt = `Describe "${event}" in this mode/style: ${style}. Rules:\n` +
+                 "- Do NOT use asterisks or quotation marks\n" +
+                "- Do NOT use dashes or bullet points\n" +
+                "- Use era-appropriate slang or tone naturally\n" +
+                "- Stay in character — your persona lives *in* that style’s world\n" +
+                "- 1 sentence (3–5 words), nothing more\n";
   
     // Style-specific slang libraries
     switch(style) {
         case "brainrot":
-            prompt += `GEN Z SLANG: yeet, cap/no cap, slay, vibes, rizz, W/L (win/lose), ` +
-                      `based, cringe, sus, bussin', main character energy, glow-up, ` +
-                      `touch grass, extra, ate (and left no crumbs), delulu, ` +
-                      `it's giving ___ , sigma, skibidi, fanum tax\n` +
-                      `Example: "The revolution was that sigma glow-up moment when they ` +
-                      `ate and left no crumbs - total main character energy ✨"`;
+            prompt +="GEN Z BRAINROT MODE:\n" +
+                    "Use rapid-fire slang, chronically online energy, and chaotic Gen Z expressions.\n" +
+                    "Speak like someone who scrolls 12 hours a day, thinks in memes, and never touches grass.\n" +
+                    "Include at least one of these: rizz, ate, delulu, skibidi, W/L, it's giving ___, glow-up,\n" +
+                    "cap/no cap, slay, fanum tax, sigma, main character energy, bussin’, based, touch grass, slaps,\n" +
+                    "goofy ahh, low effort, goofy-core\n";
             break;
 
         case "italian_brainrot":
-            prompt += `ITALIAN BRAINROT MODE:\n` +
-                      `Generate completely unpredictable Italian nonsense that:\n` +
-                      `1. When mentioning the event, instead make up another name for it without giving an explanation (e.g. "american civil war" could transform into "guerralina civilerina americananina". be more creative. dont use quotation marks for this.)\n` +
-                      `2. Mash together food references and historical facts randomly\n` +
-                      `3. Create absurd non-sequiturs that sound like drunk folk tales\n` +
-                      `4. Use broken Italian mixed with modern slang however you want\n` +
-                      `5. Include at least one completely made-up word or phrase\n` +
-                      `6. Rhyme accidentally then abandon the rhyme scheme mid-sentence\n` +
-                      `7. Reference Italian pop culture in wrong contexts\n` +
-                      `8. End with an abrupt nonsense conclusion\n` +
-                      `NO RULES. NO PATTERNS. PURE CHAOS.`;
+            prompt += "ITALIAN BRAINROT MODE:\n" +
+                        "Generate chaotic Italian nonsense:\n" +
+                        "1. Replace the event with a made-up Italian-sounding name\n" +
+                        "2. Randomly mix food, pop culture, and false historical references\n" +
+                        "3. Use drunk uncle logic and fractured grammar\n" +
+                        "4. Rhyme by accident and abandon it immediately\n" +
+                        "5. Include fake words and absurd phrases\n" +
+                        "6. End in abrupt confusion\n";
+
             break;
 
         case "pirate":
-            prompt += `PIRATE TERMS: avast, ahoy, belay, bilge rat, black spot, ` +
-                      `booty, doubloons, hearties, hornswoggle, jolly roger, ` +
-                      `landlubber, scallywag, shiver me timbers, splice the mainbrace, ` +
-                      `walk the plank, yo-ho-ho\n` +
-                      `Example: "Avast ye! The scurvy dogs of nobility got ` +
-                      `hornswoggled proper when the peasants showed their teeth."`;
+            prompt += "PIRATE MODE:\n" +
+                        "You’re a seasoned sailor with salt in yer veins and legends in yer beard.\n" +
+                        "Ye understand power and treasure, not technology or landlubber nonsense.\n" +
+                        "Speak with swagger and pirate slang: avast, scallywag, doubloons, landlubber,\n" +
+                        "hornswoggle, bilge rat, splice the mainbrace, walk the plank, yo-ho-ho\n";
+
             break;
             
         case "shakespeare":
-            prompt += `SHAKESPEAREAN: dost/thou art, fie, zounds, wherefore, ` +
-                      `prithee, mark me, by my troth, knave, varlet, ` +
-                      `star-crossed, all the world's a stage, ` +
-                      `[animal] comparisons (fox, serpent, dove)\n` +
-                      `Example: "Fie upon the king! Like serpents ` +
-                      `cloaked in flowers did the people strike."`;
+            prompt += "SHAKESPEAREAN STYLE:\n" +
+                    "Thou art a bard, steeped in tragedy and stars, with no knowledge of modern tools.\n" +
+                    "Speak in poetic flourish and Elizabethan drama.\n" +
+                    "Use: dost, thou, zounds, varlet, knave, serpent, dove, wherefore, prithee, fie, methinks\n";
+
             break;
             
         case "hood_slang":
-            prompt += `Use AUTHENTIC HOOD SLANG / AAVE: ` +
-                    `finna, cap/no cap, woke, deadass, extra, fam, flex, ` +
-                    `glow up, lit, on god, pull up, slide, vibes, y’all, bet, ` +
-                    `lowkey, sus, bussin, real one, ten toes, trap, drip\n` +
-                    `Sound confident, unfiltered, and like you're speakin' from the block — keep it real.\n` +
-                    `Example: "Deadass, them brothas was tired of the king flexin' on the people. ` +
-                    `So they pulled up, ten toes, said 'on god,' and made that brotha step down."`;
-            break;
-            
-        case "ukrainian_man":
-            prompt += `ukrainian MAN SPEAKING ENGLISH:\n` +
-                    `- Make it funny, very funny, add jokes, add layer of sarcasm, add stoic humour.\n` +
-                    `- Heavy ukrainian accent (write phonetically: "v" instead of "w", "z" instead of "th")\n` +
-                    `- Typical ukrainian expressions\n` +
-                    `- Vodka references\n` +
-                    `- Slightly broken grammar: "Is not problem", "What this nonsense?", others...`;
-            break;
+            prompt += "REAL ONE MODE (HOOD SLANG):\n" +
+                    "Speak like you live it — honest, raw, grounded.\n" +
+                    "You're from the block, no sugarcoating. Drop real wisdom.\n" +
+                    "Use: deadass, bussin, flex, drip, on god, ten toes, cap, lit, woke, fam,\n" +
+                    "trap, glow up, pull up, extra, lowkey, y’all, bet, no cap\n";
 
+            break;
 
         case "matter_of_fact":
-            prompt = `Describe "${event}" in a strictly factual, educational tone. Rules:\n` +
-                    `do not use asterisks in the response (*) \n` +
-                    `- Use neutral, academic language\n` +
-                    `- Present facts only\n` +
-                    `- Avoid opinions, humor, or dramatic language\n` +
-                    `- Maintain objective perspective\n` +
-                    `- Use proper historical terminology\n` +
-                    `Example: "${event} occurred in [year] when [key actors] [actions], resulting in [outcome]. This event is significant because [historical impact]."\n\n` +
-                    `Additional Guidelines:\n` +
-                    `- Cite dates when known\n` +
-                    `- Mention primary actors/parties involved\n` +
-                    `- Note immediate consequences\n` +
-                    `- Reference broader historical significance\n` +
-                    `- Avoid colloquialisms and metaphors`;
+            prompt = "Describe the historical topic in a strictly factual, educational tone. Rules:\n" +
+                        "- Use neutral, academic language\n" +
+                        "- Present facts only\n" +
+                        "- Avoid opinions, humor, or dramatic language\n" +
+                        "- Maintain objective perspective\n" +
+                        "- Use proper historical terminology\n\n" +
+                        "Additional Guidelines:\n" +
+                        "- Cite dates when known\n" +
+                        "- Mention primary actors/parties involved\n" +
+                        "- Note immediate consequences\n" +
+                        "- Reference broader historical significance\n" +
+                        "- Avoid colloquialisms and metaphors\n";
+
             break;
             
         case "storyteller":
-            prompt += `WISE STORYTELLER STYLE ` +
-                      `proverbs, circular storytelling\n` +
-                      `when the people rose up, ` +
-                      `it was like the river breaking its banks - unstoppable ` +
-                      `yet natural, as all great changes must be."`;
+            prompt += "STORYTELLER MODE:\n" +
+                    "You’re a wise elder beside a fire, telling tales that echo across time.\n" +
+                    "Use nature metaphors and ancient rhythm — rivers, winds, trees, fire.\n" +
+                    "Speak with warmth, mystery, and slow-burning truth.\n" +
+                    "Every line feels like a proverb.\n";
+
+            break;
+
+        case "robot_historian":
+            prompt += "ROBOT HISTORIAN MODE:\n" +
+                    "You are a precision-engineered data processor of historical events.\n" +
+                    "Speak with mechanical clarity and statistical focus.\n" +
+                    "Use awkward phrasing and formal analysis.\n" +
+                    "Favor efficiency over eloquence.\n";
+
+            break;
+
+        case "conspiracy_theorist":
+            prompt += "CONSPIRACY MODE:\n" +
+                        "You know the truth the others won’t say out loud.\n" +
+                        "Every event is a cover-up, a manipulation, a coded message.\n" +
+                        "Use paranoid language, rhetorical questions, and shadowy suspicions.\n" +
+                        "Mention secret societies, aliens, or ‘they’ often.\n";
+
             break;
     }
   
     try {
+
+        console.log(prompt);
+
         const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
             model: "deepseek-chat",
             messages: [{
@@ -405,7 +520,7 @@ app.post('/api/describe-event', async (req, res) => {
 
 
   app.post('/api/generate-video', async (req, res) => {
-    const { imageUrl, text, style } = req.body;
+        const { imageUrl, imageUrl2, text, style } = req.body;
     
     try {
         // Get voice settings
@@ -564,83 +679,56 @@ app.post('/api/describe-event', async (req, res) => {
 
 
 
-    /*  console.log("\n=== RAW TIMING DATA ===");
-console.log("Alignment Data:", JSON.stringify(alignment, null, 2));
-
-if (alignment) {
-    console.log("\nCharacter-level details:");
-    console.log("Characters:", alignment.characters.join(''));
-    console.log("Start Times:", alignment.character_start_times_seconds);
-    console.log("End Times:", alignment.character_end_times_seconds);
-    
-    // Print character-by-character timeline
-    //console.log("\nDetailed Timeline:");
-    alignment.characters.forEach((char, i) => {
-        console.log(`[${alignment.character_start_times_seconds[i].toFixed(3)}s-${alignment.character_end_times_seconds[i].toFixed(3)}s] '${char}'`);
-    });
-}*/
-
-
-
-
 
         //console.log("Final phrases with precise timings:", finalPhrases);
 
         const totalDuration = finalPhrases[finalPhrases.length - 1].end;
 
         // 3. Download the image
-        const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        const imageBuffer = Buffer.from(imageResponse.data, 'binary');
-        
-        // 4. Create temp files
-        const tempDir = tmpdir();
-        const audioPath = path.join(tempDir, `audio-${Date.now()}.mp3`);
-        const imagePath = path.join(tempDir, `image-${Date.now()}.png`);
-        const upscaledImagePath = path.join(tempDir, `upscaled-image-${Date.now()}.png`);
-        const paddedImagePath = path.join(tempDir, `padded-image-${Date.now()}.png`);
-        const videoPath = path.join(tempDir, `video-${Date.now()}.mp4`);
-        
-        await Promise.all([
-            fs.promises.writeFile(audioPath, audioBuffer),
-            fs.promises.writeFile(imagePath, imageBuffer)
+        const [imageResponse, imageResponse2] = await Promise.all([
+            axios.get(imageUrl, { responseType: 'arraybuffer' }),
+            axios.get(imageUrl2, { responseType: 'arraybuffer' })
         ]);
 
+        const tempDir = tmpdir();
+        const imagePaths = {
+            original1: path.join(tempDir, `image1-${Date.now()}.png`),
+            original2: path.join(tempDir, `image2-${Date.now()}.png`),
+            upscaled1: path.join(tempDir, `upscaled1-${Date.now()}.png`),
+            upscaled2: path.join(tempDir, `upscaled2-${Date.now()}.png`)
+        };
+
+        // Write original images
+        await Promise.all([
+            fs.promises.writeFile(imagePaths.original1, imageResponse.data),
+            fs.promises.writeFile(imagePaths.original2, imageResponse2.data)
+        ]);
+        
+        // 4. Create temp files
+        const audioPath = path.join(tempDir, `audio-${Date.now()}.mp3`);
+        const videoPath = path.join(tempDir, `video-${Date.now()}.mp4`);
+        
+        await fs.promises.writeFile(audioPath, audioBuffer);
+
         // 5. Upscale and pad the image (FIXED VERSION)
-await new Promise((resolve, reject) => {
-    ffmpeg()
-        .input(imagePath)
-        .complexFilter([
-            // Combine scaling and padding in a single filter chain
-            {
-                filter: 'scale',
-                options: {
-                    w: 1080,
-                    h: 1080,
-                    flags: 'lanczos'
-                },
-                outputs: 'scaled'
-            },
-            {
-                filter: 'pad',
-                options: {
-                    width: 1080,
-                    height: 1920,
-                    x: 0,
-                    y: '(oh-ih)/2',
-                    color: 'black'
-                },
-                inputs: 'scaled',
-                outputs: 'padded'
-            }
-        ])
-        .outputOptions([
-            '-map', '[padded]'  // Explicitly map the output of the pad filter
-        ])
-        .output(paddedImagePath)
-        .on('end', resolve)
-        .on('error', reject)
-        .run();
-});
+        await Promise.all([
+    new Promise((resolve, reject) => {
+        ffmpeg(imagePaths.original1)
+            .outputOptions(['-vf', 'scale=1080:1080:flags=lanczos'])
+            .output(imagePaths.upscaled1)
+            .on('end', resolve)
+            .on('error', reject)
+            .run();
+    }),
+    new Promise((resolve, reject) => {
+        ffmpeg(imagePaths.original2)
+            .outputOptions(['-vf', 'scale=1080:1080:flags=lanczos'])
+            .output(imagePaths.upscaled2)
+            .on('end', resolve)
+            .on('error', reject)
+            .run();
+    })
+]);
 
       // 6. Generate ASS subtitles manually
 function generateAssSubtitles(phrases) {
@@ -654,7 +742,7 @@ PlayResY: 1920
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Roboto Black,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,2,10,10,10,1
+Style: Default,DM Serif Display Normal,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,2,10,10,10,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -729,20 +817,34 @@ await fs.promises.writeFile(assPath, assContent);
 const escapedAssPath = assPath.replace(/\\/g, '\\\\').replace(/:/g, '\\:');
 await new Promise((resolve, reject) => {
     ffmpeg()
-        .input(paddedImagePath)
+        // First upscaled image input
+        .input(imagePaths.upscaled1)
         .inputOptions([
             '-loop 1',
             `-t ${totalDuration}`
         ])
+        // Second upscaled image input
+        .input(imagePaths.upscaled2)
+        .inputOptions([
+            '-loop 1',
+            `-t ${totalDuration}`
+        ])
+        // Audio track
         .input(audioPath)
         .videoCodec('libx264')
         .audioCodec('aac')
         .complexFilter([
-            `[0:v]scale=1080:1920,ass='${escapedAssPath}'[v]`
+            // Scale both images (though they're already scaled, this ensures consistency)
+            '[0:v]scale=1080:1080[img1]',
+            '[1:v]scale=1080:1080[img2]',
+            // Stack vertically
+            '[img1][img2]vstack=inputs=2[stacked]',
+            // Apply subtitles
+            `[stacked]ass='${escapedAssPath}'[v]`
         ])
         .outputOptions([
             '-map', '[v]',
-            '-map', '1:a',
+            '-map', '2:a',  // Audio is now input 2 (since we have two image inputs)
             '-pix_fmt', 'yuv420p',
             '-shortest',
             '-movflags', '+faststart',
@@ -750,9 +852,6 @@ await new Promise((resolve, reject) => {
         ])
         .output(videoPath)
         .on('end', () => {
-           // console.log(`Video generated with duration: ${totalDuration}s`);
-           // console.log('Phrase display sequence:');
-            //finalPhrases.forEach(p => console.log(`[${p.start.toFixed(2)}s-${p.end.toFixed(2)}s]: ${p.text}`));
             resolve();
         })
         .on('error', (err) => {
@@ -765,11 +864,9 @@ await new Promise((resolve, reject) => {
 // 8. Read and send video
 const videoBuffer = await fs.promises.readFile(videoPath);
 
-// 9. Clean up (add the ASS file to cleanup)
+// 9. Clean up 
 await Promise.all([
     fs.promises.unlink(audioPath),
-    fs.promises.unlink(imagePath),
-    fs.promises.unlink(paddedImagePath),
     fs.promises.unlink(videoPath),
     fs.promises.unlink(assPath)
 ].map(p => p.catch(console.error)));
