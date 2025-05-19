@@ -1,10 +1,9 @@
-
-```markdown
-# History Tellers
-
 A web application that describes historical events in different character styles and dialects, complete with AI-generated images and narration.
 
-![Demo Screenshot](images/screenshot.png)
+demo: https://youtu.be/Gc6b3Db6738
+
+```markdown
+
 
 ## Features
 
