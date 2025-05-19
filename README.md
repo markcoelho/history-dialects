@@ -2,9 +2,6 @@ A web application that describes historical events in different character styles
 
 demo: https://youtu.be/Gc6b3Db6738
 
-```markdown
-
-
 ## Features
 
 - Describe any historical event or figure in 9 different styles
@@ -28,7 +25,6 @@ demo: https://youtu.be/Gc6b3Db6738
    ```bash
    git clone https://github.com/yourusername/history-tellers.git
    cd history-tellers
-   ```
 
 2. Install dependencies:
    ```bash
