@@ -46,26 +46,29 @@ document.addEventListener('DOMContentLoaded', () => {
             <p>Generating video...</p>
         `;
         
-        const [imgResponse, img2Response] = await Promise.all([
-            fetch('/api/generate-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ event, style })
-            }),
-            fetch('/api/generate-image2', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ event, style })
-            })
-        ]);
-        
-        if (!imgResponse.ok || !img2Response.ok) throw new Error('Failed to generate images');
-        const [imgData, img2Data] = await Promise.all([
-            imgResponse.json(),
-            img2Response.json()
-        ]);
+        // 1. Generate FIRST image
+        const imgResponse = await fetch('/api/generate-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event, style })
+        });
+        if (!imgResponse.ok) throw new Error('Failed to generate first image');
+        const imgData = await imgResponse.json();
 
-        // 3. Generate and display video using the first image
+        // 2. Generate SECOND image using first image's prompt as context
+        const img2Response = await fetch('/api/generate-image2', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                event, 
+                style,
+                firstImagePrompt: imgData.promptUsed // Pass the first prompt
+            })
+        });
+        if (!img2Response.ok) throw new Error('Failed to generate second image');
+        const img2Data = await img2Response.json();
+
+        // 3. Generate video with both images
         const videoResponse = await fetch('/api/generate-video', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

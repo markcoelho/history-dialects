@@ -70,6 +70,10 @@ input {
   padding: 5px;
 }
 
+.image-grid{
+    display: none;
+}
+
 /* Style Grid */
 .style-grid {
   display: grid;

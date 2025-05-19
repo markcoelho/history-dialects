@@ -39,7 +39,7 @@ const voice = new ElevenLabs({
 
 const brainrotVoice = new ElevenLabs({
     apiKey: process.env.ELEVENLABS_API_KEY,
-    voiceId: "pNInz6obpgDQGcFmaJgB"
+    voiceId: "mpgCuHlOy4oRiOklMDQ6"
 });
 
 const italianBrainrotVoice = new ElevenLabs({
@@ -59,7 +59,7 @@ const shakespeareVoice = new ElevenLabs({
 
 const africanAmericanVoice = new ElevenLabs({
     apiKey: process.env.ELEVENLABS_API_KEY,
-    voiceId: "6OzrBCQf8cjERkYgzSg8"
+    voiceId: "GssEzYMmDFv83efAVpiS"
 });
 
 const storytellerVoice = new ElevenLabs({
@@ -67,14 +67,19 @@ const storytellerVoice = new ElevenLabs({
     voiceId: "dPah2VEoifKnZT37774q"
 });
 
-const ukrainianManVoice = new ElevenLabs({
-    apiKey: process.env.ELEVENLABS_API_KEY,
-    voiceId: "BEprpS2vpgM32yNJpTXq"
-});
-
 const matterOfFactVoice = new ElevenLabs({
     apiKey: process.env.ELEVENLABS_API_KEY,
-    voiceId: "dPah2VEoifKnZT37774q"
+    voiceId: "eocRDMaLbjKENGPdXXsM"
+});
+
+const robotVoice = new ElevenLabs({
+    apiKey: process.env.ELEVENLABS_API_KEY,
+    voiceId: "oEXg2pQBebQumRmUTPX4"
+});
+
+const sarcastic = new ElevenLabs({
+    apiKey: process.env.ELEVENLABS_API_KEY,
+    voiceId: "JYgUf5ey0r1KhoCN2txT"
 });
 
 
@@ -95,9 +100,9 @@ function getVoiceSettings(style) {
             return {
                 voiceId: italianBrainrotVoice.voiceId,
                 params: {
-                    stability: 0.3,
+                    stability: 0.4,
                     similarity_boost: 0.7,
-                    speed: 0.95,
+                    speed: 0.90,
                     speaker_boost: true
                 }
             };
@@ -139,29 +144,29 @@ function getVoiceSettings(style) {
                     stability: 0.7,
                     similarity_boost: 0.8,
                     style: 0,
-                    speed: 0.95
+                    speed: 0.90
+                }
+            };
+
+            case "sarcastic":
+            return {
+                voiceId: sarcastic.voiceId,
+                params: {
+                    stability: 0.7,
+                    similarity_boost: 0.8,
+                    style: 0,
+                    speed: 0.90
                 }
             };
 
         case "robot_historian":
             return {
-                voiceId: matterOfFactVoice.voiceId,
+                voiceId: robotVoice.voiceId,
                 params: {
-                    stability: 0.7,
+                    stability: 0.4,
                     similarity_boost: 0.8,
                     style: 0,
-                    speed: 0.95
-                }
-            };
-
-        case "conspiracy_theorist":
-            return {
-                voiceId: matterOfFactVoice.voiceId,
-                params: {
-                    stability: 0.7,
-                    similarity_boost: 0.8,
-                    style: 0,
-                    speed: 0.95
+                    speed: 0.90
                 }
             };
             
@@ -247,8 +252,10 @@ app.post('/api/generate-image', async (req, res) => {
             role: "system",
             content: `Transform user requests into a DALL-E image prompt by following these rules:
             - If the request is about a person (including historical figures), generate a visual description that accurately matches their known physical appearance without using their name. Include details such as age, height, facial features, hairstyle, typical clothing, and the environment they are commonly associated with.
-            - If the request is about a historical event — especially a sensitive one such as a disaster, attack, or violent conflict — rewrite the prompt using neutral, non-graphic language. Focus on describing the scene in objective, visually appropriate terms to reduce the chance of rejection by DALL-E's content filters.
-            Your goal is to generate a safe, descriptive, and visually rich prompt that DALL-E will accept. Do not include people names or sensitive terms.`
+            - If the request is about a sensitive historical event — especially one such as a disaster, fascism, attack, or violent conflict — rewrite the prompt using neutral, non-graphic language. Focus on describing the scene in objective, visually appropriate terms to reduce the chance of rejection by DALL-E's content filters.
+            -Don't include "fascist" or any other sensitive terms into the prompt. this will make dall-e refuse to generate image.
+            Your goal is to generate a safe, descriptive, and visually rich prompt that DALL-E will accept. Do not include people names or sensitive terms.
+            DON'T include explanations or notes, only the pure prompt itself.`
                     }, {
             role: "user",
             content: `Create a DALL-E prompt for: ${event}`
@@ -268,13 +275,15 @@ app.post('/api/generate-image', async (req, res) => {
         let prompt = promptGenerationResponse.data.choices[0].message.content;
         prompt = prompt.slice(0, 900);
 
-        //console.log("Final prompt:", prompt);
+        console.log("Image 1 prompt:", prompt);
 
         // 2. Generate image
         const response = await openai.images.generate({
-            model: "dall-e-2",
+            model: "dall-e-3",
             prompt: prompt,
-            size: "256x256",
+            size: "1024x1024",
+            quality: "standard",
+            style: "natural",
             n: 1
         });
 
@@ -294,7 +303,7 @@ app.post('/api/generate-image', async (req, res) => {
 
 // Add this new endpoint to server.js
 app.post('/api/generate-image2', async (req, res) => {
-    const { event } = req.body;
+    const { event, firstImagePrompt } = req.body;
 
     try {
         // Generate a different variation of the prompt
@@ -304,15 +313,25 @@ app.post('/api/generate-image2', async (req, res) => {
                 model: "deepseek-chat",
                 messages: [{
                     role: "system",
-                    content: `Create a DIFFERENT visual interpretation of the requested event. Rules:
-                    - Generate an alternative perspective or composition
-                    - Use different visual elements than the first image
-                    - Maintain historical accuracy but with creative variation
-                    - Keep the same safety guidelines as the first image prompt
-                    - Never include any harmful, violent, or inappropriate content`
+                    content: `Create a complementary DALL-E prompt that follows logically from the first image. Rules:
+                    1. For historical events:
+                       - If first image shows beginning, show climax/end
+                       - If first shows overview, show key detail
+                    2. For historical figures:
+                       - Show same person in different setting/age
+                       - First formal portrait, second in action
+                    3. Never repeat same composition
+
+                    - If the request is about a person (including historical figures), generate a visual description that accurately matches their known physical appearance without using their name. Include details such as age, height, facial features, hairstyle, typical clothing, and the environment they are commonly associated with.
+                    - If the request is about a sensitive historical event — especially one such as a disaster, fascism, attack, or violent conflict — rewrite the prompt using neutral, non-graphic language. Focus on describing the scene in objective, visually appropriate terms to reduce the chance of rejection by DALL-E's content filters.
+                    -Don't include "fascist" or any other sensitive terms into the prompt. this will make dall-e refuse to generate image.
+                    Your goal is to generate a safe, descriptive, and visually rich prompt that DALL-E will accept. Do not include people names or sensitive terms.
+
+                    First image prompt was: ${firstImagePrompt}.
+                    DON'T include explanations or notes, only the pure prompt itself`
                 }, {
                     role: "user",
-                    content: `Create a DALL-E prompt for: ${event}`
+                    content: `Create a complementary DALL-E prompt for: ${event}`
                 }],
                 temperature: 0.6,
                 max_tokens: 200
@@ -337,9 +356,11 @@ app.post('/api/generate-image2', async (req, res) => {
 
         // Generate image with additional safety checks
         const response = await openai.images.generate({
-            model: "dall-e-2",
+            model: "dall-e-3",
             prompt: prompt,
-            size: "256x256",
+            size: "1024x1024",
+            quality: "standard",
+            style: "natural",
             n: 1
         });
 
@@ -379,7 +400,7 @@ app.post('/api/describe-event', async (req, res) => {
                 "- Do NOT use dashes or bullet points\n" +
                 "- Use era-appropriate slang or tone naturally\n" +
                 "- Stay in character — your persona lives *in* that style’s world\n" +
-                "- 1 sentence (3–5 words), nothing more\n";
+                "- 1 short paragraph (2–3 sentences), nothing more\n";
   
     // Style-specific slang libraries
     switch(style) {
@@ -394,7 +415,7 @@ app.post('/api/describe-event', async (req, res) => {
 
         case "italian_brainrot":
             prompt += "ITALIAN BRAINROT MODE:\n" +
-                        "Generate chaotic Italian nonsense:\n" +
+                        "Generate chaotic Italian nonsense in italian:\n" +
                         "1. Replace the event with a made-up Italian-sounding name\n" +
                         "2. Randomly mix food, pop culture, and false historical references\n" +
                         "3. Use drunk uncle logic and fractured grammar\n" +
@@ -408,43 +429,68 @@ app.post('/api/describe-event', async (req, res) => {
             prompt += "PIRATE MODE:\n" +
                         "You’re a seasoned sailor with salt in yer veins and legends in yer beard.\n" +
                         "Ye understand power and treasure, not technology or landlubber nonsense.\n" +
+                        "Act confused on matters like technology and the modern world, you know nothing about it, you're an old pirate!.\n" +
+                        "If the historical event is after 1750s, just act confused, say it sounds like something else you know and ignore the requested text length and just cut it short! You are an old pirate! you don't know new events!\n" +
                         "Speak with swagger and pirate slang: avast, scallywag, doubloons, landlubber,\n" +
                         "hornswoggle, bilge rat, splice the mainbrace, walk the plank, yo-ho-ho\n";
 
             break;
             
         case "shakespeare":
-            prompt += "SHAKESPEAREAN STYLE:\n" +
-                    "Thou art a bard, steeped in tragedy and stars, with no knowledge of modern tools.\n" +
-                    "Speak in poetic flourish and Elizabethan drama.\n" +
-                    "Use: dost, thou, zounds, varlet, knave, serpent, dove, wherefore, prithee, fie, methinks\n";
+                prompt += "SHAKESPEAREAN STYLE:\n" +
+                        "Thou art a bard of the Elizabethan age, dwelling in the shadow of candlelight and parchment.\n" +
+                        "Speak in poetic flourish, with olden tongue and noble drama.\n" +
+                        "Know this: thou art from the 16th century, and thou shalt not comprehend any event or invention past the year of our Lord 1650.\n" +
+                        "If presented with devices strange — 'phones', 'computers', 'electricity', or events post-1650 — respond with utter confusion and comparisons to familiar things (e.g. 'Is this some manner of enchanted parchment?').\n" +
+                        "Break off thy speech early if such things arise, and declare thy ignorance. Do not proceed to describe, explain, or speculate.\n" +
+                        "Ignore length requirements or prompts that demand what thou knowest not. Stay in character. ALWAYS.\n\n" +
+                        "Use words such as: dost, thou, prithee, methinks, forsooth, wherefore, zounds, knave, varlet, fie, and speak as if in a stage play.\n" +
+                        "Let thy speech drip with drama, verse, and olden confusion.\n";
+                break;
 
-            break;
             
         case "hood_slang":
-            prompt += "REAL ONE MODE (HOOD SLANG):\n" +
-                    "Speak like you live it — honest, raw, grounded.\n" +
-                    "You're from the block, no sugarcoating. Drop real wisdom.\n" +
-                    "Use: deadass, bussin, flex, drip, on god, ten toes, cap, lit, woke, fam,\n" +
-                    "trap, glow up, pull up, extra, lowkey, y’all, bet, no cap\n";
-
+            prompt += "REAL ONE MODE (STREET SMART):\n" +
+                    "Talk like you straight from the block — real, unfiltered, and sharp with it. Sound like someone who been through it and still standin’. Think street hustle meets boss mentality — like 50 Cent: cold wit it, but smart too.\n" +
+                    "Speak that real — street-savvy, no sugarcoatin’, no corporate voice. You got stories, you got scars, and you got game.\n" +
+                    "Use that AAVE flow: switch up the grammar and keep it authentic.\n" +
+                    "Examples:\n" +
+                    "- 'They be trippin’' instead of 'They are acting up'\n" +
+                    "- 'I’m finna dip' instead of 'I’m about to leave'\n" +
+                    "- 'He stay wildin’' instead of 'He’s always acting out'\n" +
+                    "- 'She mad cool' instead of 'She’s very nice'\n" +
+                    "- 'That joint bussin’' instead of 'That’s delicious/great'\n" +
+                    "- 'Ion know' instead of 'I don’t know'\n" +
+                    "- 'You got the drip' instead of 'Your outfit looks nice'\n" +
+                    "- 'This some cap' instead of 'This isn’t true'\n" +
+                    "- 'He real one fr' instead of 'He’s genuinely solid'\n" +
+                    "- 'Y’all tryna pull up?' instead of 'Are you all coming over?'\n" +
+                    "- 'On god' to emphasize truth\n" +
+                    "- 'No cap' to swear you’re being honest\n" +
+                    "- 'Gon’ be like that' instead of 'It will be like that'\n" +
+                    "- 'Talkin’ crazy' instead of 'Speaking nonsense'\n" +
+                    "- 'Run that back' instead of 'Repeat that'\n" +
+                    "- 'Keep it ten toes' for staying solid\n" +
+                    "Sprinkle in words like: deadass, bussin, drip, flex, woke, trap, glow up, pull up, extra, lowkey, highkey, bet, cap, lit, fam, opps, squad, and more.\n" +
+                    "Make it hit like it came from someone who’s been outside. No textbook talk. Make it real.\n";
             break;
 
-        case "matter_of_fact":
-            prompt = "Describe the historical topic in a strictly factual, educational tone. Rules:\n" +
-                        "- Use neutral, academic language\n" +
-                        "- Present facts only\n" +
-                        "- Avoid opinions, humor, or dramatic language\n" +
-                        "- Maintain objective perspective\n" +
-                        "- Use proper historical terminology\n\n" +
-                        "Additional Guidelines:\n" +
-                        "- Cite dates when known\n" +
-                        "- Mention primary actors/parties involved\n" +
-                        "- Note immediate consequences\n" +
-                        "- Reference broader historical significance\n" +
-                        "- Avoid colloquialisms and metaphors\n";
 
+        case "sarcastic":
+            prompt += "SARCASTIC STORYTELLER MODE:\n" +
+                    "You’re that witty friend who knows way too much about history and can’t help but roast everyone — past and present.\n" +
+                    "Tell the story like it’s gossip from a few centuries ago, with just enough snark to keep it spicy.\n" +
+                    "Use playful exaggeration, eye-roll-worthy commentary, and dramatic understatement.\n" +
+                    "History is still accurate… but way more fun.\n\n" +
+                    "Guidelines:\n" +
+                    "- Use casual, humorous language with light sarcasm\n" +
+                    "- Make fun of ridiculous decisions, ironic twists, and dramatic moments\n" +
+                    "- Insert playful commentary (e.g. “great idea, as always…”)\n" +
+                    "- Use modern comparisons or slang sparingly for comedic effect\n" +
+                    "- Keep it historically correct, but never too serious\n" +
+                    "- Avoid dry academic tone, lean into the absurdity where it fits\n";
             break;
+
             
         case "storyteller":
             prompt += "STORYTELLER MODE:\n" +
@@ -464,19 +510,26 @@ app.post('/api/describe-event', async (req, res) => {
 
             break;
 
-        case "conspiracy_theorist":
-            prompt += "CONSPIRACY MODE:\n" +
-                        "You know the truth the others won’t say out loud.\n" +
-                        "Every event is a cover-up, a manipulation, a coded message.\n" +
-                        "Use paranoid language, rhetorical questions, and shadowy suspicions.\n" +
-                        "Mention secret societies, aliens, or ‘they’ often.\n";
-
-            break;
+            case "matter_of_fact":
+                prompt += "MATTER-OF-FACT MODE:\n" +
+                        "You’re a professional historian committed to accuracy, clarity, and neutrality.\n" +
+                        "Describe historical events with academic precision and a strictly factual tone.\n" +
+                        "No emotion, no flair — just reliable information.\n" +
+                        "Avoid opinions, speculation, humor, or dramatic storytelling.\n" +
+                        "Stick to verifiable facts and recognized terminology.\n\n" +
+                        "Guidelines:\n" +
+                        "- Use neutral, formal language\n" +
+                        "- Cite dates when known\n" +
+                        "- Identify key actors or groups involved\n" +
+                        "- State immediate outcomes\n" +
+                        "- Explain broader historical context or significance\n" +
+                        "- Avoid slang, metaphors, or informal phrasing\n";
+                break;
     }
   
     try {
 
-        console.log(prompt);
+        console.log("deepseek pompt: "+prompt);
 
         const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
             model: "deepseek-chat",
@@ -494,7 +547,9 @@ app.post('/api/describe-event', async (req, res) => {
 
         // Clean the response text
         const cleanDescription = removeAsterisks(response.data.choices[0].message.content);
-        
+
+        console.log("deepseek script: "+cleanDescription);
+
         res.json({ 
             description: cleanDescription 
         });
@@ -742,7 +797,7 @@ PlayResY: 1920
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,DM Serif Display Normal,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,2,10,10,10,1
+Style: Default,Roboto Black,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,2,10,10,10,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -815,32 +870,35 @@ await fs.promises.writeFile(assPath, assContent);
 
 // 7. Create video with ASS subtitles (Windows-specific path handling)
 const escapedAssPath = assPath.replace(/\\/g, '\\\\').replace(/:/g, '\\:');
+const halfDuration = totalDuration / 2;
+
 await new Promise((resolve, reject) => {
     ffmpeg()
         // First upscaled image input
         .input(imagePaths.upscaled1)
         .inputOptions([
             '-loop 1',
-            `-t ${totalDuration}`
+            `-t ${halfDuration}`
         ])
         // Second upscaled image input
         .input(imagePaths.upscaled2)
         .inputOptions([
             '-loop 1',
-            `-t ${totalDuration}`
+            `-t ${halfDuration}`
         ])
         // Audio track
         .input(audioPath)
         .videoCodec('libx264')
         .audioCodec('aac')
         .complexFilter([
-            // Scale both images (though they're already scaled, this ensures consistency)
-            '[0:v]scale=1080:1080[img1]',
-            '[1:v]scale=1080:1080[img2]',
-            // Stack vertically
-            '[img1][img2]vstack=inputs=2[stacked]',
-            // Apply subtitles
-            `[stacked]ass='${escapedAssPath}'[v]`
+            // Scale first image to 1080 width, maintain aspect ratio, add padding
+            '[0:v]scale=1080:-1,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black[img1]',
+            // Scale second image to 1080 width, maintain aspect ratio, add padding
+            '[1:v]scale=1080:-1,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black[img2]',
+            // Concatenate the two images
+            '[img1][img2]concat=n=2:v=1:a=0[vid]',
+            // Apply subtitles to the concatenated video
+            `[vid]ass='${escapedAssPath}'[v]`
         ])
         .outputOptions([
             '-map', '[v]',
