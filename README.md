@@ -107,7 +107,6 @@ You'll need accounts and API keys from:
 
 **Video Generation Errors**:
 - Verify FFmpeg is installed and in PATH
-- Check available disk space in temp directory
 
 **API Errors**:
 - Verify all API keys are correct in `.env`
