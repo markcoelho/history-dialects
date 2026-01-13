@@ -356,11 +356,11 @@ app.post('/api/generate-image2', async (req, res) => {
 
         // Generate image with additional safety checks
         const response = await openai.images.generate({
-            model: "dall-e-3",
+            model: "dall-e-2",
             prompt: prompt,
-            size: "1024x1024",
-            quality: "standard",
-            style: "natural",
+            size: "256x256",
+            /*quality: "standard",
+            style: "natural",*/
             n: 1
         });
 
