@@ -1,13 +1,22 @@
-// config/voices.js
-const ElevenLabs = require('elevenlabs-node');
-const { VOICE_IDS } = require('./constants');
+// config/voices.js - Manages ElevenLabs voice configurations and settings
+
+const ElevenLabs = require('elevenlabs-node');  // ElevenLabs API wrapper
+const { VOICE_IDS } = require('./constants');    // Voice ID constants
 
 class VoiceManager {
+    /**
+     * Initialize VoiceManager with ElevenLabs API key
+     * @param {string} apiKey - ElevenLabs API key
+     */
     constructor(apiKey) {
         this.apiKey = apiKey;
-        this.initializeVoices();
+        this.initializeVoices();  // Create voice instances
     }
 
+    /**
+     * Initialize all voice instances with their respective IDs
+     * Creates individual ElevenLabs instances for each voice style
+     */
     initializeVoices() {
         this.brainrotVoice = new ElevenLabs({
             apiKey: this.apiKey,
@@ -55,7 +64,13 @@ class VoiceManager {
         });
     }
 
+    /**
+     * Get voice settings for a specific style
+     * @param {string} style - The narrative style (e.g., 'brainrot', 'pirate')
+     * @returns {Object} Object containing voiceId and voice parameters
+     */
     getVoiceSettings(style) {
+        // Map style names to voice instances
         const voiceMap = {
             brainrot: this.brainrotVoice,
             italian_brainrot: this.italianBrainrotVoice,
@@ -68,6 +83,11 @@ class VoiceManager {
             sarcastic: this.sarcasticVoice
         };
 
+        // Voice parameter settings for each style
+        // stability: 0-1 (lower = more expressive/variable)
+        // similarity_boost: 0-1 (how closely to match the original voice)
+        // style: 0-1 (exaggeration of voice style)
+        // speed: playback speed multiplier
         const settingsMap = {
             brainrot: {
                 params: { stability: 1, similarity_boost: 1, style: 1, speed: 0.9 }
@@ -98,12 +118,14 @@ class VoiceManager {
             }
         };
 
+        // Get voice instance for the requested style (default to storyteller)
         const voice = voiceMap[style] || this.storytellerVoice;
+        // Get settings for the requested style (default to storyteller)
         const settings = settingsMap[style] || settingsMap.storyteller;
 
         return {
-            voiceId: voice.voiceId,
-            params: settings.params
+            voiceId: voice.voiceId,  // ElevenLabs voice ID
+            params: settings.params   // Voice parameters
         };
     }
 }

@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Historical Event Describer</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8" />                     <!-- Character encoding -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <!-- Responsive design -->
+    <title>Historical Event Describer</title>     <!-- Page title -->
+    <link rel="stylesheet" href="style.css" />    <!-- Link to stylesheet -->
   </head>
   <body>
     <header>
-      <h1>History Tellers</h1>
-      <p>Learn about any historical event with different characters and dialects</p>
-      <p>Computational Creativity for Design 2025</p>
+      <h1>History Tellers</h1>                     <!-- Main title -->
+      <p>Learn about any historical event with different characters and dialects</p> <!-- Subtitle -->
+      <p>Computational Creativity for Design 2025</p> <!-- Course attribution -->
     </header>
     <main>
-      <div class="main-container">
-        <div class="left-column">
-          <form id="eventForm">
-            <div class="input-group">
+      <div class="main-container">                  <!-- Flex container for two-column layout -->
+        <div class="left-column">                   <!-- Left column contains input form -->
+          <form id="eventForm">                      <!-- Form for user input -->
+            <div class="input-group">                <!-- Event input group -->
               <label for="event">Write an Event or Person from History:</label>
               <input
                 type="text"
@@ -26,19 +26,17 @@
               />
             </div>
 
-            <div class="input-group">
+            <div class="input-group">                <!-- Style selection group -->
               <label for="style">Pick someone to explain</label>
-              <div class="scrollable-container">
-                <div class="style-grid" id="styleGrid">
+              <div class="scrollable-container">     <!-- Scrollable area for style options -->
+                <div class="style-grid" id="styleGrid"> <!-- Grid of style options -->
+                  <!-- Each style option has data-value for form submission and custom image -->
                   <div class="style-option" data-value="brainrot" style="--order: 1;">
                     <img src="images/brainrot.png" alt="Gen Z Brainrot" />
                     <span>Gen Z Brainrot</span>
                   </div>
                   <div class="style-option" data-value="italian_brainrot" style="--order: 2;">
-                    <img
-                      src="images/italian_brainrot.png"
-                      alt="Italian Brainrot"
-                    />
+                    <img src="images/italian_brainrot.png" alt="Italian Brainrot" />
                     <span>Italian Brainrot</span>
                   </div>
                   <div class="style-option" data-value="pirate" style="--order: 3;">
@@ -50,9 +48,7 @@
                     <span>Shakespearean</span>
                   </div>
                   <div class="style-option" data-value="african_american" style="--order: 5;">
-                    <img
-                      src="images/african_american.png"
-                      alt="African American Vernacular" />
+                    <img src="images/african_american.png" alt="African American Vernacular" />
                     <span>African American Vernacular</span>
                   </div>
                   <div class="style-option" data-value="storyteller" style="--order: 6;">
@@ -73,20 +69,22 @@
                   </div>
                 </div>
               </div>
+              <!-- Hidden input stores selected style value for form submission -->
               <input type="hidden" id="style" name="style" required />
             </div>
 
-            <button type="submit">Describe Event</button>
+            <button type="submit">Describe Event</button> <!-- Submit button -->
           </form>
         </div>
 
-        <div class="right-column" id="result">
-          <!-- Result will be displayed here -->
+        <div class="right-column" id="result">       <!-- Right column displays results -->
+          <!-- Result will be dynamically inserted here by script.js -->
         </div>
       </div>
     </main>
 
-    <script src="script.js"></script>
-    <script src="select.js"></script>
+    <!-- JavaScript files loaded at end of body for performance -->
+    <script src="script.js"></script>                 <!-- Main application logic -->
+    <script src="select.js"></script>                 <!-- Style selection handling -->
   </body>
 </html>

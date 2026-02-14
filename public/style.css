@@ -1,192 +1,208 @@
-/* Base Styles */
+/* public/style.css - Stylesheet for Historical Event Describer */
+
+/* Base Styles - applied to entire document */
 body {
-  font-family: Arial, sans-serif;
-  margin: 0 100px;
-  padding: 20px;
-  text-align: center;
-  background: black;
-  color: whitesmoke;
-  animation: fadeIn 1s ease-in-out;
+  font-family: Arial, sans-serif;      /* Clean, readable font */
+  margin: 0 100px;                     /* Horizontal margin on larger screens */
+  padding: 20px;                       /* Inner spacing */
+  text-align: center;                   /* Center-align text by default */
+  background: black;                    /* Dark background */
+  color: whitesmoke;                    /* Light text for contrast */
+  animation: fadeIn 1s ease-in-out;      /* Fade-in animation on page load */
 }
 
-/* Layout */
+/* Layout - Two-column main container */
 .main-container {
-  display: flex;
-  gap: 20px;
-  animation: fadeIn 1s ease-in-out;
-}
-.left-column, .right-column {
-  flex: 2;
-}
-.right-column {
-  margin-left: 30px;
-  padding: 15px;
-  background: #f9f9f9;
-  border-radius: 4px;
-  min-height: 300px;
+  display: flex;                        /* Flexbox layout */
+  gap: 20px;                            /* Space between columns */
+  animation: fadeIn 1s ease-in-out;      /* Fade-in animation */
 }
 
-/* Header */
+.left-column, .right-column {
+  flex: 2;                              /* Both columns take equal width */
+}
+
+.right-column {
+  margin-left: 30px;                    /* Additional left margin */
+  padding: 15px;                         /* Inner spacing */
+  background: #f9f9f9;                   /* Light background for contrast */
+  border-radius: 4px;                    /* Slightly rounded corners */
+  min-height: 300px;                     /* Minimum height for empty state */
+}
+
+/* Header section */
 header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  text-align: left;
-  animation: fadeIn 1s ease-in-out;
+  display: flex;                         /* Flex layout for header items */
+  align-items: center;                   /* Vertically center items */
+  justify-content: space-between;         /* Space between title and paragraphs */
+  text-align: left;                      /* Left-align text */
+  animation: fadeIn 1s ease-in-out;       /* Fade-in animation */
 }
+
 header h1 {
-  font: bold 36px 'DMSerifDisplay', serif;
-  text-transform: uppercase;
-  margin-right: 80px;
+  font: bold 36px 'DMSerifDisplay', serif; /* Custom font with fallback */
+  text-transform: uppercase;              /* All caps */
+  margin-right: 80px;                     /* Space after title */
 }
+
 header p {
-  width: 200px;
-  font-size: 12px;
+  width: 200px;                           /* Fixed width for description */
+  font-size: 12px;                        /* Small text */
 }
 
 /* Form Elements */
 .input-group {
-  margin: 20px 0;
-  text-align: left;
+  margin: 20px 0;                         /* Vertical spacing between groups */
+  text-align: left;                       /* Left-align labels and inputs */
 }
+
 label {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 20px;
-  font-weight: lighter;
+  display: block;                         /* Labels on their own line */
+  margin-bottom: 10px;                     /* Space below label */
+  font-size: 20px;                         /* Larger label text */
+  font-weight: lighter;                    /* Light font weight */
 }
+
 input {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid whitesmoke;
-  border-radius: 5rem;
-  font-size: 16px;
-  background: none;
-  color: whitesmoke;
+  width: 100%;                             /* Full width inputs */
+  padding: 10px;                            /* Inner padding */
+  border: 1px solid whitesmoke;             /* Light border */
+  border-radius: 5rem;                      /* Pill-shaped input */
+  font-size: 16px;                          /* Readable text size */
+  background: none;                          /* Transparent background */
+  color: whitesmoke;                         /* Light text */
 }
+
 .scrollable-container {
-  width: 100%;
-  overflow-y: auto;
-  padding: 5px;
+  width: 100%;                               /* Full width */
+  overflow-y: auto;                           /* Vertical scroll if needed */
+  padding: 5px;                               /* Inner spacing */
 }
 
-.image-grid{
-    display: none;
-}
-
-/* Style Grid */
+/* Style Grid - for character selection */
 .style-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  margin-top: 10px;
+  display: grid;                             /* Grid layout */
+  grid-template-columns: repeat(3, 1fr);     /* 3 equal columns */
+  gap: 5px;                                   /* Small gap between items */
+  margin-top: 10px;                           /* Space above grid */
 }
+
 .style-option {
-    position: relative;
-    width: 100%;
-    height: fit-content;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s, opacity 0.2s ease-in-out;
-    opacity: 0.5;
-    outline: none;
-    animation: fadeIn 0.5s ease-in-out;
-    animation-delay: calc(var(--order) * 0.1s);
-    animation-fill-mode: both;
+    position: relative;                       /* For potential overlay positioning */
+    width: 100%;                               /* Full width of grid cell */
+    height: fit-content;                       /* Height matches content */
+    overflow: hidden;                          /* Hide overflow */
+    cursor: pointer;                           /* Clickable appearance */
+    transition: transform 0.2s, opacity 0.2s ease-in-out; /* Smooth animations */
+    opacity: 0.5;                               /* Half opacity by default */
+    outline: none;                              /* Remove focus outline */
+    animation: fadeIn 0.5s ease-in-out;          /* Staggered fade-in */
+    animation-delay: calc(var(--order) * 0.1s);  /* Delay based on order */
+    animation-fill-mode: both;                   /* Keep final animation state */
 }
 
 .style-option img {
-    position: relative;
-    border-radius: 10%;
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-    transition: border 0.2s ease-in-out; /* Added for smooth border transition */
-    border: 2px solid transparent; /* Prepare for border without visual change */
+    position: relative;                          /* Maintain positioning */
+    border-radius: 10%;                          /* Slightly rounded corners */
+    width: 100%;                                  /* Full width of container */
+    height: auto;                                  /* Maintain aspect ratio */
+    object-fit: cover;                             /* Cover container without distortion */
+    transition: border 0.2s ease-in-out;           /* Smooth border transition */
+    border: 2px solid transparent;                  /* Invisible border (prepares for hover) */
 }
 
+/* Hover and selected states */
 .style-option:hover, .style-option.selected {
-  transform: scale(1.05);
-  opacity: 1 !important;
-}
-
-.style-option.selected {
-    opacity: 1 !important;
-    transform: scale(1.05);
+  transform: scale(1.05);                        /* Slight enlargement */
+  opacity: 1 !important;                          /* Full opacity (override) */
 }
 
 .style-option.selected img {
-    border: 2px solid white; /* White border for selected state */
-    box-sizing: border-box; /* Ensures border doesn't affect dimensions */
+    border: 2px solid white;                      /* White border for selected state */
+    box-sizing: border-box;                        /* Border doesn't affect dimensions */
 }
 
-/* Buttons */
+/* Buttons - consistent styling */
 button, .download-btn {
-  width: 100%;
-  padding: 10px 20px;
-  background: black;
-  color: whitesmoke;
-  border: 1px solid whitesmoke;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s;
+  width: 100%;                                    /* Full width */
+  padding: 10px 20px;                              /* Comfortable padding */
+  background: black;                                /* Dark background */
+  color: whitesmoke;                                /* Light text */
+  border: 1px solid whitesmoke;                     /* Light border */
+  border-radius: 4px;                                /* Slightly rounded */
+  font-size: 16px;                                   /* Readable text */
+  cursor: pointer;                                    /* Pointer on hover */
+  transition: background-color 0.3s;                  /* Smooth hover transition */
 }
+
 button:hover, .download-btn:hover {
-  background: whitesmoke;
+  background: whitesmoke;                             /* Invert colors on hover */
   color: black;
 }
 
-/* Results & History */
+/* Results area - where generated content appears */
 #result {
-  margin-top: 20px;
-  padding: 15px;
-  background: whitesmoke;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  min-height: 50px;
-  text-align: left;
-}
-.history-image, .history-video {
-  max-width: 100%;
-  border-radius: 8px;
-  margin: 15px 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-.history-video {
-  max-width: 400px;
-  background: #000;
+  margin-top: 20px;                                   /* Space above */
+  padding: 15px;                                      /* Inner padding */
+  background: whitesmoke;                              /* Light background */
+  border: 1px solid #ddd;                              /* Subtle border */
+  border-radius: 4px;                                  /* Rounded corners */
+  min-height: 50px;                                    /* Minimum height */
+  text-align: left;                                     /* Left-align text content */
 }
 
-/* Utility */
+/* Images and videos */
+.history-image, .history-video {
+  max-width: 100%;                                     /* Responsive sizing */
+  border-radius: 8px;                                   /* Rounded corners */
+  margin: 15px 0;                                        /* Vertical spacing */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);                 /* Subtle shadow */
+}
+
+.history-video {
+  max-width: 400px;                                     /* Limit video width */
+  background: #000;                                      /* Black background */
+}
+
+/* Utility classes */
 .spinner {
-  width: 40px;
+  width: 40px;                                          /* Fixed size */
   height: 40px;
-  margin: 20px auto;
-  border: 4px solid rgba(0,0,0,0.1);
-  border-top-color: #09f;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  margin: 20px auto;                                    /* Centered */
+  border: 4px solid rgba(0,0,0,0.1);                     /* Light gray border */
+  border-top-color: #09f;                                /* Blue top border */
+  border-radius: 50%;                                    /* Circle shape */
+  animation: spin 1s linear infinite;                     /* Spinning animation */
 }
+
 .error, .error-alert {
-  color: #d32f2f;
-  margin: 10px 0;
+  color: #d32f2f;                                        /* Red error color */
+  margin: 10px 0;                                         /* Vertical spacing */
 }
+
 .error-alert {
-  font-size: 24px;
-  text-align: center;
+  font-size: 24px;                                       /* Large emoji/icon */
+  text-align: center;                                     /* Centered */
+}
+
+.text-output{
+  display: none;
+}
+.image-grid{
+  display:none;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { transform: translateY(0); }
-}
-@keyframes spin {
-  to { transform: rotate(360deg); }
+  from { opacity: 0; transform: translateY(20px); }      /* Start hidden and below */
+  to { transform: translateY(0); }                        /* End at normal position */
 }
 
-/* Responsive */
+@keyframes spin {
+  to { transform: rotate(360deg); }                       /* Full rotation */
+}
+
+/* Responsive adjustments */
 @media (min-width: 1920px) {
-  .style-grid { grid-template-columns: repeat(4, 1fr); }
+  .style-grid { grid-template-columns: repeat(4, 1fr); } /* 4 columns on ultra-wide */
 }

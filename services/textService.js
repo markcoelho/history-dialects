@@ -1,16 +1,35 @@
-// services/textService.js
-const axios = require('axios');
-const { DEEPSEEK_CONFIG } = require('../config/constants');
+// services/textService.js - Handles text generation using DeepSeek API with various narrative styles
+
+const axios = require('axios');  // HTTP client for API calls
+const { DEEPSEEK_CONFIG } = require('../config/constants');  // Configuration constants
 
 class TextService {
+    /**
+     * Initialize TextService with DeepSeek API key
+     * @param {string} apiKey - DeepSeek API key
+     */
     constructor(apiKey) {
         this.apiKey = apiKey;
     }
 
+    /**
+     * Generate a description of a historical event in a specific narrative style
+     * @param {string} event - Historical event or person to describe
+     * @param {string} style - Narrative style (brainrot, pirate, etc.)
+     * @returns {Promise<string>} Generated description
+     */
     async describeEvent(event, style) {
+        // Build prompt based on event and selected style
         let prompt = this.buildPrompt(event, style);
         
+        // Log the prompt being sent to DeepSeek
+        console.log('\n=== TEXT GENERATION PROMPT ===');
+        console.log('Event:', event);
+        console.log('Style:', style);
+        console.log('Full Prompt:', prompt);
+        
         try {
+            // Call DeepSeek API for text generation
             const response = await axios.post('https://api.deepseek.com/v1/chat/completions', {
                 model: DEEPSEEK_CONFIG.MODEL,
                 messages: [{
@@ -25,21 +44,37 @@ class TextService {
                 }
             });
 
-            return this.removeAsterisks(response.data.choices[0].message.content);
+            // Extract generated text
+            const generatedText = response.data.choices[0].message.content;
+            
+            // Log the generated text
+            console.log('\n=== GENERATED NARRATION ===');
+            console.log(generatedText);
+            
+            // Remove asterisks from text (clean up markdown)
+            return this.removeAsterisks(generatedText);
         } catch (error) {
             console.error("DeepSeek API Error:", error.response?.data || error.message);
             throw error;
         }
     }
 
+    /**
+     * Build the complete prompt for DeepSeek based on event and style
+     * @param {string} event - Historical event or person
+     * @param {string} style - Narrative style
+     * @returns {string} Complete prompt
+     */
     buildPrompt(event, style) {
+        // Base prompt with formatting rules
         let prompt = `Describe "${event}" in this mode/style: ${style}. Rules:\n` +
                     "- Do NOT use asterisks or quotation marks\n" +
                     "- Do NOT use dashes or bullet points\n" +
                     "- Use era-appropriate slang or tone naturally\n" +
-                    "- Stay in character — your persona lives in that style’s world\n" +
-                    "- 1 short paragraph (1–2 sentences), nothing more\n";
+                    "- Stay in character — your persona lives *in* that style’s world\n" +
+                    "- 1 short paragraph (2–3 sentences), nothing more\n";
 
+        // Add style-specific instructions
         switch(style) {
             case "brainrot":
                 prompt += this.getBrainrotPrompt();
@@ -72,6 +107,8 @@ class TextService {
 
         return prompt;
     }
+
+    // Style-specific prompt generators
 
     getBrainrotPrompt() {
         return "GEN Z BRAINROT MODE:\n" +
@@ -137,16 +174,26 @@ class TextService {
                "Describe historical events with academic precision.\n";
     }
 
+    /**
+     * Remove asterisks from generated text (clean up markdown formatting)
+     * @param {string} text - Text with potential asterisks
+     * @returns {string} Cleaned text
+     */
     removeAsterisks(text) {
         return text.replace(/\*/g, '').replace(/\s{2,}/g, ' ').trim();
     }
 
+    /**
+     * Clean text for TTS by removing special characters
+     * @param {string} text - Raw text
+     * @returns {string} Cleaned text suitable for TTS
+     */
     cleanText(text) {
         return text
-            .replace(/[*_#/]/g, ' ')
-            .replace(/\[.*?\]/g, '')
-            .replace(/\s{2,}/g, ' ')
-            .trim();
+            .replace(/[*_#/]/g, ' ')          // Remove asterisks, underscores, hashes, slashes
+            .replace(/\[.*?\]/g, '')           // Remove anything in square brackets
+            .replace(/\s{2,}/g, ' ')           // Replace multiple spaces with single space
+            .trim();                           // Remove leading/trailing spaces
     }
 }
 
