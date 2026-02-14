@@ -567,4 +567,8 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
+<<<<<<< HEAD
 **Created with ❤️ for bringing history to life through creative AI**
+=======
+**Created with ❤️ for bringing history to life through creative AI**
+>>>>>>> e87e937457b9d700ad1099158e266eacffbd6884
