@@ -549,9 +549,6 @@ Error: TTS generation failed
 - **ElevenLabs model speed** (fastest to slowest): 
   - Flash > Turbo > Monolingual > Multilingual
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
