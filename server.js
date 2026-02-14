@@ -49,7 +49,7 @@ const italianBrainrotVoice = new ElevenLabs({
 
 const pirateVoice = new ElevenLabs({
     apiKey: process.env.ELEVENLABS_API_KEY,
-    voiceId: "tFEwp2OEgyZc3b1eWZ7e"
+    voiceId: "PPzYpIqttlTYA83688JI"
 });
 
 const shakespeareVoice = new ElevenLabs({
