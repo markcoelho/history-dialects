@@ -7,22 +7,21 @@ const path = require('path');                  // Path utilities for file handli
 require('dotenv').config();                    // Load environment variables from .env file
 
 // Import custom service modules
-const VoiceManager = require('./config/voices');      // Manages ElevenLabs voice configurations
-const TextService = require('./services/textService'); // Handles text generation via DeepSeek
-const ImageService = require('./services/imageService'); // Manages DALL-E image generation
-const VideoService = require('./services/videoService'); // Creates videos with subtitles
+const TextService = require('./services/textService');
+const ImageService = require('./services/imageService');
+const VoiceManager = require('./config/voices');
+const SpeechService = require('./services/speechService'); // New import
+const VideoService = require('./services/videoService');
 const { PORT } = require('./config/constants');       // Port configuration constant
 
 const app = express();  // Initialize Express application
 
 // Initialize service instances with API keys from environment variables
-const voiceManager = new VoiceManager(process.env.ELEVENLABS_API_KEY);
 const textService = new TextService(process.env.DEEPSEEK_API_KEY);
-const imageService = new ImageService(
-    process.env.DEEPSEEK_API_KEY, 
-    process.env.OPENAI_API_KEY
-);
-const videoService = new VideoService(voiceManager);
+const imageService = new ImageService(process.env.DEEPSEEK_API_KEY, process.env.OPENAI_API_KEY);
+const voiceManager = new VoiceManager(process.env.ELEVENLABS_API_KEY);
+const speechService = new SpeechService(process.env.ELEVENLABS_API_KEY, voiceManager);
+const videoService = new VideoService(speechService);
 
 // Middleware setup
 app.use(express.json());      // Parse JSON request bodies
@@ -90,44 +89,19 @@ app.post('/api/generate-image2', async (req, res) => {
  * Generate speech audio from text using ElevenLabs TTS
  * Request body: { text, style }
  */
+// Update the /api/generate-speech endpoint to use the new service
 app.post('/api/generate-speech', async (req, res) => {
     const { text, style } = req.body;
     
-    // Log the text being sent to ElevenLabs
-    console.log('\n=== ELEVENLABS TTS INPUT ===');
-    console.log('Style:', style);
-    console.log('Text to synthesize:', text);
-    
     try {
-        const cleanText = textService.cleanText(text);
-        const { voiceId, params } = voiceManager.getVoiceSettings(style);
-
-        // Request TTS with timestamps for subtitle synchronization
-        const response = await axios.post(
-            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`,
-            {
-                text: cleanText,
-                model_id: "eleven_monolingual_v1",
-                voice_settings: params
-            },
-            {
-                headers: {
-                    'xi-api-key': process.env.ELEVENLABS_API_KEY,
-                    'Content-Type': 'application/json'
-                },
-                responseType: 'json'
-            }
-        );
-
-        console.log('✅ ElevenLabs TTS generated successfully');
+        const cleanText = speechService.cleanText(text);
+        const audioBuffer = await speechService.generateSpeech(cleanText, style);
         
-        // Convert base64 audio to buffer and send as MP3
-        const audioBuffer = Buffer.from(response.data.audio_base64, 'base64');
         res.setHeader('Content-Type', 'audio/mpeg');
         res.send(audioBuffer);
         
     } catch (error) {
-        console.error("TTS Error:", error.response?.data || error.message);
+        console.error("TTS Error:", error.message);
         res.status(500).json({ error: "TTS generation failed" });
     }
 });
@@ -139,26 +113,16 @@ app.post('/api/generate-speech', async (req, res) => {
 app.post('/api/generate-video', async (req, res) => {
     const { imageUrl, imageUrl2, text, style } = req.body;
     
-    console.log('\n=== VIDEO GENERATION STARTED ===');
-    console.log('Style:', style);
-    console.log('Text length:', text.length, 'characters');
-    console.log('First image URL:', imageUrl);
-    console.log('Second image URL:', imageUrl2);
-    
     try {
-        const videoBuffer = await videoService.generateVideo(imageUrl, imageUrl2, text, style);
-        
-        console.log('\n✅ Video generated successfully');
-        console.log('Video size:', videoBuffer.length, 'bytes');
+        const cleanText = speechService.cleanText(text);
+        const videoBuffer = await videoService.generateVideo(imageUrl, imageUrl2, cleanText, style);
         
         res.setHeader('Content-Type', 'video/mp4');
         res.send(videoBuffer);
+        
     } catch (error) {
         console.error("Video generation error:", error);
-        res.status(500).json({ 
-            error: "Video generation failed", 
-            details: error.message
-        });
+        res.status(500).json({ error: "Video generation failed" });
     }
 });
 

@@ -11,11 +11,11 @@ const { VIDEO_CONFIG } = require('../config/constants'); // Video configuration 
 
 class VideoService {
     /**
-     * Initialize VideoService with VoiceManager for TTS settings
-     * @param {VoiceManager} voiceManager - Voice manager instance
+     * Initialize VideoService with SpeechService for TTS
+     * @param {SpeechService} speechService - Speech service instance
      */
-    constructor(voiceManager) {
-        this.voiceManager = voiceManager;
+    constructor(speechService) {
+        this.speechService = speechService;
     }
 
     /**
@@ -27,16 +27,11 @@ class VideoService {
      * @returns {Promise<Buffer>} Video file as buffer
      */
     async generateVideo(imageUrl, imageUrl2, text, style) {
-        // Get voice settings for the selected style
-        const { voiceId, params } = this.voiceManager.getVoiceSettings(style);
-
-        // Step 1: Get audio with character-level timestamps from ElevenLabs
-        const audioResponse = await this.getAudioWithTimestamps(text, voiceId, params);
-        const audioBuffer = Buffer.from(audioResponse.data.audio_base64, 'base64');
-        const alignment = audioResponse.data.alignment; // Character timings for subtitles
+        // Step 1: Get audio with character-level timestamps from SpeechService
+        const { audioBuffer, alignment } = await this.speechService.generateSpeechWithTimestamps(text, style);
 
         // Step 2: Process character timings into word/phrase segments
-        const phrases = this.processPhrases(alignment);
+        const phrases = this.speechService.processPhrases(alignment);
         const totalDuration = phrases[phrases.length - 1].end;
 
         // Step 3: Download and process images
@@ -60,165 +55,6 @@ class VideoService {
         await this.cleanupFiles([audioPath, videoPath, assPath, ...Object.values(paths)]);
 
         return videoBuffer;
-    }
-
-    /**
-     * Get audio with character timestamps from ElevenLabs
-     * @param {string} text - Text to synthesize
-     * @param {string} voiceId - ElevenLabs voice ID
-     * @param {Object} params - Voice parameters
-     * @returns {Promise<Object>} API response with audio and timestamps
-     */
-    async getAudioWithTimestamps(text, voiceId, params) {
-        return await axios.post(
-            `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}/with-timestamps`,
-            {
-                text: text,
-                model_id: "eleven_monolingual_v1",
-                voice_settings: params
-            },
-            {
-                headers: {
-                    'xi-api-key': process.env.ELEVENLABS_API_KEY,
-                    'Content-Type': 'application/json'
-                },
-                responseType: 'json'
-            }
-        );
-    }
-
-    /**
-     * Process character-level alignment data into word/phrase segments
-     * @param {Object} alignment - Character timing data from ElevenLabs
-     * @returns {Array} Array of phrase objects with start/end times
-     */
-    processPhrases(alignment) {
-        const phrases = [];
-        let currentPhrase = { text: '', words: [], start: null, end: 0 };
-        let currentWord = { text: '', start: null, end: 0, chars: [] };
-
-        // Iterate through characters to build words and phrases
-        alignment.characters.forEach((char, index) => {
-            const charStart = alignment.character_start_times_seconds[index];
-            const charEnd = alignment.character_end_times_seconds[index];
-
-            if (char !== ' ') {
-                // Building a word
-                if (currentWord.text === '') currentWord.start = charStart;
-                currentWord.text += char;
-                currentWord.end = charEnd;
-                return;
-            }
-
-            // Space encountered - finalize current word
-            if (currentWord.text) {
-                this.finalizeWord(currentWord, currentPhrase);
-                currentWord = { text: '', start: null, end: 0, chars: [] };
-            }
-
-            // Check for sentence-ending punctuation
-            if (char === '.' || char === '!' || char === '?') {
-                if (currentPhrase.words.length > 0) {
-                    this.finalizePhrase(currentPhrase, phrases);
-                    currentPhrase = { text: '', words: [], start: null, end: 0 };
-                }
-            }
-        });
-
-        // Handle any remaining words/phrases
-        this.handleRemainingContent(currentWord, currentPhrase, phrases);
-
-        // Split long phrases for better subtitle readability
-        return this.splitLongPhrases(phrases);
-    }
-
-    /**
-     * Add a completed word to the current phrase
-     */
-    finalizeWord(currentWord, currentPhrase) {
-        currentPhrase.words.push({
-            text: currentWord.text,
-            start: currentWord.start,
-            end: currentWord.end
-        });
-        if (currentPhrase.start === null) currentPhrase.start = currentWord.start;
-        currentPhrase.end = currentWord.end;
-    }
-
-    /**
-     * Finalize a complete phrase and add to phrases array
-     */
-    finalizePhrase(currentPhrase, phrases) {
-        currentPhrase.text = currentPhrase.words.map(w => w.text).join(' ');
-        phrases.push({ ...currentPhrase });
-    }
-
-    /**
-     * Handle any remaining content after processing all characters
-     */
-    handleRemainingContent(currentWord, currentPhrase, phrases) {
-        if (currentWord.text) {
-            this.finalizeWord(currentWord, currentPhrase);
-        }
-        if (currentPhrase.words.length > 0) {
-            this.finalizePhrase(currentPhrase, phrases);
-        }
-    }
-
-    /**
-     * Split long phrases into smaller chunks for better subtitle readability
-     * @param {Array} phrases - Original phrases
-     * @returns {Array} Split phrases
-     */
-    splitLongPhrases(phrases) {
-        const finalPhrases = [];
-        phrases.forEach(phrase => {
-            // Calculate average word length to determine optimal phrase size
-            const avgWordLength = phrase.words.reduce((sum, word) => sum + word.text.length, 0) / phrase.words.length;
-            const maxWords = avgWordLength > 4 ? 3 : avgWordLength > 2 ? 4 : 5;
-
-            if (phrase.words.length <= maxWords) {
-                finalPhrases.push(phrase);
-                return;
-            }
-
-            this.splitPhrase(phrase, maxWords, finalPhrases);
-        });
-        return finalPhrases;
-    }
-
-    /**
-     * Split a single phrase into multiple smaller phrases
-     */
-    splitPhrase(phrase, maxWords, finalPhrases) {
-        let currentSegment = {
-            text: '',
-            words: [],
-            start: phrase.words[0].start,
-            end: phrase.words[0].end
-        };
-
-        phrase.words.forEach((word, i) => {
-            if (currentSegment.words.length >= maxWords) {
-                currentSegment.text = currentSegment.words.map(w => w.text).join(' ');
-                finalPhrases.push({ ...currentSegment });
-
-                currentSegment = {
-                    text: '',
-                    words: [],
-                    start: word.start,
-                    end: word.end
-                };
-            }
-
-            currentSegment.words.push(word);
-            currentSegment.end = word.end;
-        });
-
-        if (currentSegment.words.length > 0) {
-            currentSegment.text = currentSegment.words.map(w => w.text).join(' ');
-            finalPhrases.push({ ...currentSegment });
-        }
     }
 
     /**
