@@ -85,26 +85,6 @@ app.post('/api/generate-image2', async (req, res) => {
     }
 });
 
-/**
- * Generate speech audio from text using ElevenLabs TTS
- * Request body: { text, style }
- */
-// Update the /api/generate-speech endpoint to use the new service
-app.post('/api/generate-speech', async (req, res) => {
-    const { text, style } = req.body;
-    
-    try {
-        const cleanText = speechService.cleanText(text);
-        const audioBuffer = await speechService.generateSpeech(cleanText, style);
-        
-        res.setHeader('Content-Type', 'audio/mpeg');
-        res.send(audioBuffer);
-        
-    } catch (error) {
-        console.error("TTS Error:", error.message);
-        res.status(500).json({ error: "TTS generation failed" });
-    }
-});
 
 /**
  * Generate a video combining images, audio, and subtitles

@@ -13,7 +13,7 @@ const VOICE_IDS = {
     SHAKESPEARE: "qg9068uIPhh2zLXgBEgX",         // Shakespearean voice
     AFRICAN_AMERICAN: "GssEzYMmDFv83efAVpiS",    // African American vernacular voice
     STORYTELLER: "dPah2VEoifKnZT37774q",         // Wise storyteller voice
-    MATTER_OF_FACT: "eocRDMaLbjKENGPdXXsM",      // Serious, factual voice
+    MATTER_OF_FACT: "qyFhaJEAwHR0eYLCmlUT",      // Serious, factual voice
     ROBOT: "oEXg2pQBebQumRmUTPX4",               // Robotic voice
     SARCASTIC: "JYgUf5ey0r1KhoCN2txT"            // Sarcastic voice
 };

@@ -136,20 +136,20 @@ class VideoService {
     generateAssSubtitles(phrases) {
         // ASS header with styling information
         let assContent = `[Script Info]
-Title: Karaoke Subtitles
-ScriptType: v4.00+
-WrapStyle: 0
-ScaledBorderAndShadow: yes
-PlayResX: 1080
-PlayResY: 1920
+        Title: Karaoke Subtitles
+        ScriptType: v4.00+
+        WrapStyle: 0
+        ScaledBorderAndShadow: yes
+        PlayResX: 1080
+        PlayResY: 1920
 
-[V4+ Styles]
-Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Roboto Black,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,2,10,10,10,1
+        [V4+ Styles]
+        Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+        Style: Default,Roboto Black,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,2,10,10,10,1
 
-[Events]
-Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-`;
+        [Events]
+        Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+        `;
 
         // Generate subtitle events for each word with highlighting
         phrases.forEach(phrase => {
@@ -166,6 +166,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             });
         });
 
+        console.log(assContent);
         return assContent;
     }
 
@@ -274,7 +275,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                     '-pix_fmt', 'yuv420p',    // Pixel format for compatibility
                     '-shortest',               // End when shortest stream ends
                     '-movflags', '+faststart', // Optimize for web streaming
-                    '-r', VIDEO_CONFIG.FPS.toString()  // Frame rate
+                    '-r', VIDEO_CONFIG.FPS.toString()  // Frame rate (30 fps)
                 ])
                 .output(videoPath)
                 .on('end', resolve)

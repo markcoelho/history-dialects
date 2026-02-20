@@ -62,46 +62,6 @@ class SpeechService {
     }
 
     /**
-     * Generate speech only (without timestamps) - useful for standalone TTS
-     * @param {string} text - Text to synthesize
-     * @param {string} style - Narrative style for voice selection
-     * @returns {Promise<Buffer>} Audio buffer
-     */
-    async generateSpeech(text, style) {
-        console.log('\n=== ELEVENLABS TTS (STANDALONE) ===');
-        console.log('Style:', style);
-        console.log('Text to synthesize:', text);
-
-        try {
-            const { voiceId, params } = this.voiceManager.getVoiceSettings(style);
-
-            // Standard TTS endpoint (no timestamps)
-            const response = await axios.post(
-                `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-                {
-                    text: text,
-                    model_id: "eleven_monolingual_v1",
-                    voice_settings: params
-                },
-                {
-                    headers: {
-                        'xi-api-key': this.apiKey,
-                        'Content-Type': 'application/json'
-                    },
-                    responseType: 'arraybuffer' // Direct audio buffer
-                }
-            );
-
-            console.log('✅ ElevenLabs TTS generated successfully');
-            return Buffer.from(response.data);
-
-        } catch (error) {
-            console.error("ElevenLabs TTS Error:", error.response?.data || error.message);
-            throw new Error(`Speech generation failed: ${error.message}`);
-        }
-    }
-
-    /**
      * Clean text for TTS by removing special characters and formatting
      * @param {string} text - Raw text
      * @returns {string} Cleaned text suitable for TTS
