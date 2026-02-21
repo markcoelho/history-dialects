@@ -26,6 +26,7 @@ const videoService = new VideoService(speechService);
 // Middleware setup
 app.use(express.json());      // Parse JSON request bodies
 app.use(express.static('public')); // Serve static files from 'public' directory
+app.use('/config.json', express.static(path.join(__dirname, 'config.json')));
 
 // API Routes
 

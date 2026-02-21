@@ -1,0 +1,167 @@
+{
+  "api": {
+    "deepseek": {
+      "model": "deepseek-chat",
+      "temperature": 0.7,
+      "max_tokens": 200,
+      "base_url": "https://api.deepseek.com/v1/chat/completions"
+    },
+    "openai": {
+      "dalle": {
+        "model": "dall-e-2",
+        "size": "256x256",
+        "n": 1,
+        "max_prompt_length": 1000
+      }
+    },
+    "elevenlabs": {
+      "model": "eleven_monolingual_v1",
+      "base_url": "https://api.elevenlabs.io/v1",
+      "endpoints": {
+        "text_to_speech": "/text-to-speech/{voice_id}",
+        "text_to_speech_with_timestamps": "/text-to-speech/{voice_id}/with-timestamps"
+      }
+    }
+  },
+  "voices": {
+    "brainrot": {
+      "id": "mpgCuHlOy4oRiOklMDQ6",
+      "name": "Gen Z Brainrot",
+      "image_src": "images/brainrot.png",
+      "description": "Young, energetic Gen Z voice with chaotic energy",
+      "parameters": {
+        "stability": 1.0,
+        "similarity_boost": 1.0,
+        "speed": 0.9
+      },
+      "prompt_template": "GEN Z BRAINROT MODE:\nUse rapid-fire slang, chronically online energy, and chaotic Gen Z expressions.\nInclude at least one of: rizz, ate, delulu, skibidi, W/L, it's giving ___, glow-up,\ncap/no cap, slay, fanum tax, sigma, main character energy, bussin’, based, touch grass, slaps,\ngoofy ahh, low effort, goofy-core\n"
+    },
+    "italian_brainrot": {
+      "id": "pNInz6obpgDQGcFmaJgB",
+      "name": "Italian Brainrot",
+      "image_src": "images/italian_brainrot.png",
+      "description": "Italian-accented chaotic nonsense voice",
+      "parameters": {
+        "stability": 0.4,
+        "similarity_boost": 0.7,
+        "speed": 0.9
+      },
+      "prompt_template": "ITALIAN BRAINROT MODE:\nGenerate chaotic Italian nonsense in italian:\n1. Replace the event with a made-up Italian-sounding name\n2. Randomly mix food, pop culture, and false historical references\n3. Use drunk uncle logic and fractured grammar\n4. Rhyme by accident and abandon it immediately\n5. Include fake words and absurd phrases\n6. End in abrupt confusion\n"
+    },
+    "pirate": {
+      "id": "PPzYpIqttlTYA83688JI",
+      "name": "Pirate Speak",
+      "image_src": "images/pirate.png",
+      "description": "Gruff, salty sea captain voice",
+      "parameters": {
+        "stability": 0.5,
+        "similarity_boost": 0.75,
+        "speed": 1.0
+      },
+      "prompt_template": "PIRATE MODE:\nYou're a seasoned sailor with salt in yer veins and legends in yer beard.\nIf the historical event is after 1750s, just act confused, say it sounds like something else you know.\nSpeak with swagger and pirate slang: avast, scallywag, doubloons, landlubber,\nhornswoggle, bilge rat, splice the mainbrace, walk the plank, yo-ho-ho\n"
+    },
+    "shakespeare": {
+      "id": "qg9068uIPhh2zLXgBEgX",
+      "name": "Shakespearean",
+      "image_src": "images/shakespeare.png",
+      "description": "Dramatic Elizabethan actor voice",
+      "parameters": {
+        "stability": 0.6,
+        "similarity_boost": 0.75,
+        "speed": 0.9
+      },
+      "prompt_template": "SHAKESPEAREAN STYLE:\nThou art a bard of the Elizabethan age. Speak in poetic flourish, with olden tongue.\nIf presented with events post-1650, respond with utter confusion.\nUse words such as: dost, thou, prithee, methinks, forsooth, wherefore, zounds, knave, varlet, fie.\n"
+    },
+    "african_american": {
+      "id": "GssEzYMmDFv83efAVpiS",
+      "name": "African American Vernacular",
+      "image_src": "images/african_american.png",
+      "description": "Authentic, unfiltered street-smart voice",
+      "parameters": {
+        "stability": 0.5,
+        "similarity_boost": 0.7,
+        "speed": 0.9
+      },
+      "prompt_template": "REAL ONE MODE (STREET SMART):\nTalk like you straight from the block — real, unfiltered, and sharp with it.\nUse AAVE flow and authentic expressions.\n"
+    },
+    "storyteller": {
+      "id": "dPah2VEoifKnZT37774q",
+      "name": "Wise Storyteller",
+      "image_src": "images/storyteller.png",
+      "description": "Elderly, wise voice with ancient rhythm",
+      "parameters": {
+        "stability": 0.7,
+        "similarity_boost": 0.8,
+        "speed": 0.9
+      },
+      "prompt_template": "STORYTELLER MODE:\nYou're a wise elder beside a fire, telling tales that echo across time.\nUse nature metaphors and ancient rhythm — rivers, winds, trees, fire.\n"
+    },
+    "matter_of_fact": {
+      "id": "qyFhaJEAwHR0eYLCmlUT",
+      "name": "Factual, Serious",
+      "image_src": "images/matter_of_fact.png",
+      "description": "Professional, academic historian voice",
+      "parameters": {
+        "stability": 0.7,
+        "similarity_boost": 0.8,
+        "speed": 0.9
+      },
+      "prompt_template": "MATTER-OF-FACT MODE:\nYou're a professional historian committed to accuracy, clarity, and neutrality.\nDescribe historical events with academic precision.\n"
+    },
+    "robot_historian": {
+      "id": "oEXg2pQBebQumRmUTPX4",
+      "name": "AI Historian",
+      "image_src": "images/robot.jpg",
+      "description": "Precision-engineered robotic voice",
+      "parameters": {
+        "stability": 0.4,
+        "similarity_boost": 0.8,
+        "speed": 0.9
+      },
+      "prompt_template": "ROBOT HISTORIAN MODE:\nYou are a precision-engineered data processor of historical events.\nSpeak with mechanical clarity and statistical focus.\n"
+    },
+    "sarcastic": {
+      "id": "JYgUf5ey0r1KhoCN2txT",
+      "name": "Sarcastic",
+      "image_src": "images/sarcastic.jpg",
+      "description": "Witty, snarky friend voice",
+      "parameters": {
+        "stability": 0.7,
+        "similarity_boost": 0.8,
+        "speed": 0.9
+      },
+      "prompt_template": "SARCASTIC STORYTELLER MODE:\nYou're that witty friend who knows way too much about history.\nTell the story like it's gossip from a few centuries ago, with just enough snark.\n"
+    }
+  },
+  "video": {
+    "resolution": {
+      "width": 1080,
+      "height": 1920
+    },
+    "fps": 30,
+    "codec": "libx264",
+    "audio_codec": "aac",
+    "pixel_format": "yuv420p",
+    "subtitle": {
+      "font": "Roboto Black",
+      "font_size": 72,
+      "primary_color": "&H00FFFFFF",
+      "highlight_color": "&H00FFFF&",
+      "alignment": 2,
+      "margin_v": 700
+    }
+  },
+  "image_generation": {
+    "prompt_system_messages": {
+      "first_image": "Transform user requests into a DALL-E image prompt by following these rules:\n- If the request is about a person, generate a visual description that accurately matches their known physical appearance without using their name.\n- If the request is about a sensitive historical event, rewrite the prompt using neutral, non-graphic language.\n- Don't include \"fascist\" or any other sensitive terms.\nYour goal is to generate a safe, descriptive, and visually rich prompt.",
+      "second_image": "Create a complementary DALL-E prompt that follows logically from the first image. Rules:\n1. For historical events: Show different perspective (beginning/climax, overview/detail)\n2. For historical figures: Show same person in different setting/age\n3. Never repeat same composition\nFollow the same safety guidelines for sensitive content.\nFirst image prompt was: {first_prompt}"
+    },
+    "temperature": {
+      "first_image": 0.4,
+      "second_image": 0.6
+    }
+  },
+  "text_generation": {
+    "base_rules": "- Do NOT use asterisks or quotation marks\n- Do NOT use dashes or bullet points\n- Use era-appropriate slang or tone naturally\n- Stay in character — your persona lives *in* that style's world\n- 1 short paragraph (2–3 sentences), nothing more"
+  }
+}
