@@ -1,71 +1,57 @@
 // services/videoService.js - Handles video generation with subtitles synchronized to audio
 
-const axios = require('axios');                       // HTTP client for downloading images
-const ffmpeg = require('fluent-ffmpeg');              // FFmpeg wrapper for video processing
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path; // Path to FFmpeg binary
-ffmpeg.setFfmpegPath(ffmpegPath);                     // Configure FFmpeg path
-const fs = require('fs');                              // File system operations
-const path = require('path');                           // Path utilities
-const { tmpdir } = require('os');                       // Temporary directory utilities
-const { VIDEO_CONFIG } = require('../config/constants'); // Video configuration constants
+const axios = require('axios');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+ffmpeg.setFfmpegPath(ffmpegPath);
+const fs = require('fs');
+const path = require('path');
+const { tmpdir } = require('os');
+const { VIDEO_CONFIG } = require('../config/constants');
 
 class VideoService {
-    /**
-     * Initialize VideoService with SpeechService for TTS
-     * @param {SpeechService} speechService - Speech service instance
-     */
     constructor(speechService) {
         this.speechService = speechService;
     }
 
-    /**
-     * Generate complete video with images, audio, and subtitles
-     * @param {string} imageUrl - URL of first image
-     * @param {string} imageUrl2 - URL of second image
-     * @param {string} text - Narration text
-     * @param {string} style - Narrative style for voice settings
-     * @returns {Promise<Buffer>} Video file as buffer
-     */
     async generateVideo(imageUrl, imageUrl2, text, style) {
-        // Step 1: Get audio with character-level timestamps from SpeechService
-        const { audioBuffer, alignment } = await this.speechService.generateSpeechWithTimestamps(text, style);
+        console.log('\n🎬 Starting video generation...');
+        const startTime = Date.now();
+        
+        try {
+            const { audioBuffer, alignment } = await this.speechService.generateSpeechWithTimestamps(text, style);
+            
+            const phrases = this.speechService.processPhrases(alignment);
+            const totalDuration = phrases[phrases.length - 1].end;
+            console.log(`  ⏱️  Duration: ${totalDuration.toFixed(2)}s, Phrases: ${phrases.length}`);
 
-        // Step 2: Process character timings into word/phrase segments
-        const phrases = this.speechService.processPhrases(alignment);
-        const totalDuration = phrases[phrases.length - 1].end;
+            console.log('  🖼️  Processing images...');
+            const tempDir = tmpdir();
+            const paths = await this.downloadAndProcessImages(imageUrl, imageUrl2, tempDir);
 
-        // Step 3: Download and process images
-        const tempDir = tmpdir();  // Get system temporary directory
-        const paths = await this.downloadAndProcessImages(imageUrl, imageUrl2, tempDir);
+            const audioPath = path.join(tempDir, `audio-${Date.now()}.mp3`);
+            await fs.promises.writeFile(audioPath, audioBuffer);
 
-        // Step 4: Save audio to temporary file
-        const audioPath = path.join(tempDir, `audio-${Date.now()}.mp3`);
-        await fs.promises.writeFile(audioPath, audioBuffer);
+            const assPath = await this.generateSubtitles(phrases, tempDir);
 
-        // Step 5: Generate subtitles in ASS format
-        const assPath = await this.generateSubtitles(phrases, tempDir);
+            console.log('  🎥 Creating video...');
+            const videoPath = await this.createVideo(paths, audioPath, assPath, totalDuration, tempDir);
 
-        // Step 6: Create video using FFmpeg
-        const videoPath = await this.createVideo(paths, audioPath, assPath, totalDuration, tempDir);
+            const videoBuffer = await fs.promises.readFile(videoPath);
+            
+            const elapsedTime = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`  ✅ Video complete: ${(videoBuffer.length / 1024).toFixed(1)}KB in ${elapsedTime}s`);
 
-        // Step 7: Read video into buffer for response
-        const videoBuffer = await fs.promises.readFile(videoPath);
+            await this.cleanupFiles([audioPath, videoPath, assPath, ...Object.values(paths)]);
 
-        // Step 8: Clean up temporary files
-        await this.cleanupFiles([audioPath, videoPath, assPath, ...Object.values(paths)]);
-
-        return videoBuffer;
+            return videoBuffer;
+        } catch (error) {
+            console.error('❌ Video generation failed:', error.message);
+            throw error;
+        }
     }
 
-    /**
-     * Download images and prepare them for video processing
-     * @param {string} imageUrl - First image URL
-     * @param {string} imageUrl2 - Second image URL
-     * @param {string} tempDir - Temporary directory path
-     * @returns {Promise<Object>} Paths to downloaded and processed images
-     */
     async downloadAndProcessImages(imageUrl, imageUrl2, tempDir) {
-        // Download both images in parallel
         const [imageResponse, imageResponse2] = await Promise.all([
             axios.get(imageUrl, { responseType: 'arraybuffer' }),
             axios.get(imageUrl2, { responseType: 'arraybuffer' })
@@ -79,26 +65,21 @@ class VideoService {
             upscaled2: path.join(tempDir, `upscaled2-${timestamp}.png`)
         };
 
-        // Save original images
         await Promise.all([
             fs.promises.writeFile(paths.original1, imageResponse.data),
             fs.promises.writeFile(paths.original2, imageResponse2.data)
         ]);
 
-        // Upscale images to video resolution
         await this.upscaleImages(paths);
+        
         return paths;
     }
 
-    /**
-     * Upscale images to video resolution using FFmpeg
-     * @param {Object} paths - Object containing image paths
-     */
     async upscaleImages(paths) {
         await Promise.all([
             new Promise((resolve, reject) => {
                 ffmpeg(paths.original1)
-                    .outputOptions(['-vf', 'scale=1080:1080:flags=lanczos'])  // Lanczos scaling for quality
+                    .outputOptions(['-vf', `scale=${VIDEO_CONFIG.RESOLUTION.WIDTH}:${VIDEO_CONFIG.RESOLUTION.HEIGHT}:flags=lanczos`])
                     .output(paths.upscaled1)
                     .on('end', resolve)
                     .on('error', reject)
@@ -106,7 +87,7 @@ class VideoService {
             }),
             new Promise((resolve, reject) => {
                 ffmpeg(paths.original2)
-                    .outputOptions(['-vf', 'scale=1080:1080:flags=lanczos'])
+                    .outputOptions(['-vf', `scale=${VIDEO_CONFIG.RESOLUTION.WIDTH}:${VIDEO_CONFIG.RESOLUTION.HEIGHT}:flags=lanczos`])
                     .output(paths.upscaled2)
                     .on('end', resolve)
                     .on('error', reject)
@@ -115,12 +96,6 @@ class VideoService {
         ]);
     }
 
-    /**
-     * Generate ASS (Advanced SubStation Alpha) subtitle file
-     * @param {Array} phrases - Phrase objects with timing
-     * @param {string} tempDir - Temporary directory path
-     * @returns {Promise<string>} Path to generated ASS file
-     */
     async generateSubtitles(phrases, tempDir) {
         const assContent = this.generateAssSubtitles(phrases);
         const assPath = path.join(tempDir, `subtitles-${Date.now()}.ass`);
@@ -128,30 +103,25 @@ class VideoService {
         return assPath;
     }
 
-    /**
-     * Generate ASS subtitle content with word-by-word highlighting
-     * @param {Array} phrases - Phrase objects
-     * @returns {string} ASS format subtitle content
-     */
     generateAssSubtitles(phrases) {
-        // ASS header with styling information
+        const { font, font_size, primary_color, highlight_color, alignment, margin_v } = VIDEO_CONFIG.SUBTITLE;
+
         let assContent = `[Script Info]
-        Title: Karaoke Subtitles
-        ScriptType: v4.00+
-        WrapStyle: 0
-        ScaledBorderAndShadow: yes
-        PlayResX: 1080
-        PlayResY: 1920
+Title: Karaoke Subtitles
+ScriptType: v4.00+
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+PlayResX: ${VIDEO_CONFIG.RESOLUTION.WIDTH}
+PlayResY: ${VIDEO_CONFIG.RESOLUTION.HEIGHT}
 
-        [V4+ Styles]
-        Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-        Style: Default,Roboto Black,72,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,2,10,10,10,1
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,${font},${font_size},${primary_color},&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,1,${alignment},10,10,${margin_v},1
 
-        [Events]
-        Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
-        `;
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
 
-        // Generate subtitle events for each word with highlighting
         phrases.forEach(phrase => {
             const processedWords = this.processWordTimings(phrase.words);
 
@@ -160,22 +130,15 @@ class VideoService {
 
                 const wordStart = this.secondsToAssTime(word.start);
                 const wordEnd = this.secondsToAssTime(word.end);
-                const highlightedText = this.createHighlightedText(processedWords, i);
+                const highlightedText = this.createHighlightedText(processedWords, i, highlight_color, primary_color);
 
                 assContent += `Dialogue: 0,${wordStart},${wordEnd},Default,,0,0,700,,${highlightedText}\n`;
             });
         });
 
-        console.log(assContent);
         return assContent;
     }
 
-    /**
-     * Process word timings to ensure proper end times
-     * Sets word end time to next word's start time for continuous highlighting
-     * @param {Array} words - Word objects
-     * @returns {Array} Processed words with adjusted timings
-     */
     processWordTimings(words) {
         const processedWords = [];
         for (let i = 0; i < words.length; i++) {
@@ -195,18 +158,11 @@ class VideoService {
         return processedWords;
     }
 
-    /**
-     * Create highlighted text for current word in ASS format
-     * @param {Array} words - All words in phrase
-     * @param {number} currentIndex - Index of word to highlight
-     * @returns {string} ASS formatted text with highlighting
-     */
-    createHighlightedText(words, currentIndex) {
+    createHighlightedText(words, currentIndex, highlightColor, primaryColor) {
         let text = '';
         words.forEach((word, j) => {
             if (j === currentIndex) {
-                // Highlight current word in yellow (ASS color format: &HBBGGRR&)
-                text += `{\\c&H00FFFF&}${word.text}{\\c&HFFFFFF&}`;
+                text += `{\\c${highlightColor}}${word.text}{\\c${primaryColor}}`;
             } else {
                 text += word.text;
             }
@@ -215,11 +171,6 @@ class VideoService {
         return text;
     }
 
-    /**
-     * Convert seconds to ASS time format (H:MM:SS.cc)
-     * @param {number} seconds - Time in seconds
-     * @returns {string} ASS formatted time
-     */
     secondsToAssTime(seconds) {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
@@ -229,69 +180,48 @@ class VideoService {
         return `${hours}:${minutes.toString().padStart(2, '0')}:${Math.floor(secs).toString().padStart(2, '0')}.${centiseconds.toString().padStart(2, '0')}`;
     }
 
-    /**
-     * Create final video using FFmpeg
-     * @param {Object} paths - Image paths
-     * @param {string} audioPath - Audio file path
-     * @param {string} assPath - Subtitle file path
-     * @param {number} totalDuration - Total audio duration
-     * @param {string} tempDir - Temporary directory
-     * @returns {Promise<string>} Path to generated video
-     */
     async createVideo(paths, audioPath, assPath, totalDuration, tempDir) {
         const videoPath = path.join(tempDir, `video-${Date.now()}.mp4`);
-        const halfDuration = totalDuration / 2;  // Each image gets half the video duration
-        
-        // Escape ASS path for FFmpeg filter complex
+        const halfDuration = totalDuration / 2;
+
         const escapedAssPath = assPath.replace(/\\/g, '\\\\').replace(/:/g, '\\:');
 
-        // FFmpeg command to create video
         await new Promise((resolve, reject) => {
             ffmpeg()
-                // Input first image, loop for half duration
                 .input(paths.upscaled1).inputOptions(['-loop 1', `-t ${halfDuration}`])
-                // Input second image, loop for half duration
                 .input(paths.upscaled2).inputOptions(['-loop 1', `-t ${halfDuration}`])
-                // Input audio
                 .input(audioPath)
-                // Video codec
-                .videoCodec('libx264')
-                // Audio codec
-                .audioCodec('aac')
-                // Complex filter for combining images and adding subtitles
+                .videoCodec(VIDEO_CONFIG.CODEC)
+                .audioCodec(VIDEO_CONFIG.AUDIO_CODEC)
                 .complexFilter([
-                    // Scale first image and pad to 1080x1920 (centered)
-                    '[0:v]scale=1080:-1,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black[img1]',
-                    // Scale second image and pad
-                    '[1:v]scale=1080:-1,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black[img2]',
-                    // Concatenate the two images
+                    `[0:v]scale=${VIDEO_CONFIG.RESOLUTION.WIDTH}:-1,pad=${VIDEO_CONFIG.RESOLUTION.WIDTH}:${VIDEO_CONFIG.RESOLUTION.HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=black[img1]`,
+                    `[1:v]scale=${VIDEO_CONFIG.RESOLUTION.WIDTH}:-1,pad=${VIDEO_CONFIG.RESOLUTION.WIDTH}:${VIDEO_CONFIG.RESOLUTION.HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=black[img2]`,
                     '[img1][img2]concat=n=2:v=1:a=0[vid]',
-                    // Add subtitles
                     `[vid]ass='${escapedAssPath}'[v]`
                 ])
                 .outputOptions([
-                    '-map', '[v]',           // Map video stream
-                    '-map', '2:a',            // Map audio stream
-                    '-pix_fmt', 'yuv420p',    // Pixel format for compatibility
-                    '-shortest',               // End when shortest stream ends
-                    '-movflags', '+faststart', // Optimize for web streaming
-                    '-r', VIDEO_CONFIG.FPS.toString()  // Frame rate (30 fps)
+                    '-map', '[v]',
+                    '-map', '2:a',
+                    '-pix_fmt', VIDEO_CONFIG.PIXEL_FORMAT,
+                    '-shortest',
+                    '-movflags', '+faststart',
+                    '-r', VIDEO_CONFIG.FPS.toString()
                 ])
                 .output(videoPath)
                 .on('end', resolve)
-                .on('error', reject)
+                .on('error', (err, stdout, stderr) => {
+                    console.error('  ❌ FFmpeg error:', err.message);
+                    console.error('  📄 FFmpeg stderr:', stderr);
+                    reject(err);
+                })
                 .run();
         });
 
         return videoPath;
     }
 
-    /**
-     * Clean up temporary files
-     * @param {Array} filePaths - Paths to files to delete
-     */
     async cleanupFiles(filePaths) {
-        await Promise.all(filePaths.map(p => fs.promises.unlink(p).catch(console.error)));
+        await Promise.all(filePaths.map(p => fs.promises.unlink(p).catch(() => {})));
     }
 }
 

@@ -1,44 +1,85 @@
-// config/constants.js - Central configuration file for all constants used in the application
+// config/constants.js - Central configuration file that loads from config.json
 
-const path = require('path');  // Path module for file path handling
+const path = require('path');
+const fs = require('fs');
+
+// Load configuration from config.json - fail if missing
+const configPath = path.join(__dirname, '..', 'config.json');
+
+if (!fs.existsSync(configPath)) {
+    console.error('❌ FATAL: config.json not found at', configPath);
+    console.error('Please ensure config.json exists in the root directory');
+    process.exit(1);
+}
+
+let config;
+try {
+    const configFile = fs.readFileSync(configPath, 'utf8');
+    config = JSON.parse(configFile);
+    console.log('✅ Configuration loaded from config.json');
+} catch (error) {
+    console.error('❌ FATAL: Failed to parse config.json:', error.message);
+    process.exit(1);
+}
 
 // Server configuration
-const PORT = 3000;  // Port on which the server will run
+const PORT = 3000;
 
-// ElevenLabs Voice IDs - each corresponds to a specific voice in ElevenLabs
-const VOICE_IDS = {
-    BRAINROT: "mpgCuHlOy4oRiOklMDQ6",           // Gen Z brainrot voice
-    ITALIAN_BRAINROT: "pNInz6obpgDQGcFmaJgB",   // Italian-accented brainrot
-    PIRATE: "PPzYpIqttlTYA83688JI",              // Pirate voice
-    SHAKESPEARE: "qg9068uIPhh2zLXgBEgX",         // Shakespearean voice
-    AFRICAN_AMERICAN: "GssEzYMmDFv83efAVpiS",    // African American vernacular voice
-    STORYTELLER: "dPah2VEoifKnZT37774q",         // Wise storyteller voice
-    MATTER_OF_FACT: "qyFhaJEAwHR0eYLCmlUT",      // Serious, factual voice
-    ROBOT: "oEXg2pQBebQumRmUTPX4",               // Robotic voice
-    SARCASTIC: "JYgUf5ey0r1KhoCN2txT"            // Sarcastic voice
-};
+// Extract voice IDs from config
+const VOICE_IDS = {};
+Object.entries(config.voices).forEach(([key, voice]) => {
+    VOICE_IDS[key.toUpperCase()] = voice.id;
+});
 
-// DeepSeek API configuration for text generation
+// DeepSeek API configuration from config.json
 const DEEPSEEK_CONFIG = {
-    MODEL: "deepseek-chat",       // Model identifier for DeepSeek API
-    TEMPERATURE: 0.7,             // Creativity/randomness level (0-1)
-    MAX_TOKENS: 200                // Maximum response length
+    MODEL: config.api.deepseek.model,
+    TEMPERATURE: config.api.deepseek.temperature,
+    MAX_TOKENS: config.api.deepseek.max_tokens,
+    BASE_URL: config.api.deepseek.base_url
 };
 
-// DALL-E image generation configuration
+// DALL-E image generation configuration from config.json
 const IMAGE_CONFIG = {
-    MODEL: "dall-e-2",            // DALL-E model version
-    SIZE: "256x256",              // Image dimensions (small for speed)
-    N: 1                           // Number of images to generate
+    MODEL: config.api.openai.dalle.model,
+    SIZE: config.api.openai.dalle.size,
+    N: config.api.openai.dalle.n,
+    MAX_PROMPT_LENGTH: config.api.openai.dalle.max_prompt_length
 };
 
-// Video generation configuration
+// Video generation configuration from config.json
 const VIDEO_CONFIG = {
     RESOLUTION: {
-        WIDTH: 1080,               // Video width in pixels
-        HEIGHT: 1920                // Video height in pixels (portrait/vertical)
+        WIDTH: config.video.resolution.width,
+        HEIGHT: config.video.resolution.height
     },
-    FPS: 30                         // Frames per second
+    FPS: config.video.fps,
+    CODEC: config.video.codec,
+    AUDIO_CODEC: config.video.audio_codec,
+    PIXEL_FORMAT: config.video.pixel_format,
+    SUBTITLE: config.video.subtitle
+};
+
+// Image generation prompt system messages
+const IMAGE_PROMPT_CONFIG = {
+    FIRST_IMAGE_SYSTEM_MESSAGE: config.image_generation.prompt_system_messages.first_image,
+    SECOND_IMAGE_SYSTEM_MESSAGE: config.image_generation.prompt_system_messages.second_image,
+    TEMPERATURE: {
+        FIRST_IMAGE: config.image_generation.temperature.first_image,
+        SECOND_IMAGE: config.image_generation.temperature.second_image
+    }
+};
+
+// Text generation base rules
+const TEXT_GENERATION_CONFIG = {
+    BASE_RULES: config.text_generation.base_rules
+};
+
+// ElevenLabs configuration
+const ELEVENLABS_CONFIG = {
+    MODEL: config.api.elevenlabs.model,
+    BASE_URL: config.api.elevenlabs.base_url,
+    ENDPOINTS: config.api.elevenlabs.endpoints
 };
 
 // Export all constants for use in other modules
@@ -47,5 +88,11 @@ module.exports = {
     VOICE_IDS,
     DEEPSEEK_CONFIG,
     IMAGE_CONFIG,
-    VIDEO_CONFIG
+    VIDEO_CONFIG,
+    IMAGE_PROMPT_CONFIG,
+    TEXT_GENERATION_CONFIG,
+    ELEVENLABS_CONFIG,
+    
+    // Also export the raw config for services that need more detailed access
+    RAW_CONFIG: config
 };

@@ -1,20 +1,18 @@
-// server.js - Main server entry point for the Historical Event Describer application
+// server.js - Main server entry point
 
-// Import required dependencies
-const express = require('express');          // Web framework for Node.js
-const axios = require('axios');               // HTTP client for API calls
-const path = require('path');                  // Path utilities for file handling
-require('dotenv').config();                    // Load environment variables from .env file
+const express = require('express');
+const axios = require('axios');
+const path = require('path');
+require('dotenv').config();
 
-// Import custom service modules
 const TextService = require('./services/textService');
 const ImageService = require('./services/imageService');
 const VoiceManager = require('./config/voices');
-const SpeechService = require('./services/speechService'); // New import
+const SpeechService = require('./services/speechService');
 const VideoService = require('./services/videoService');
-const { PORT } = require('./config/constants');       // Port configuration constant
+const { PORT } = require('./config/constants'); // Still just get PORT from constants
 
-const app = express();  // Initialize Express application
+const app = express();
 
 // Initialize service instances with API keys from environment variables
 const textService = new TextService(process.env.DEEPSEEK_API_KEY);
@@ -24,16 +22,11 @@ const speechService = new SpeechService(process.env.ELEVENLABS_API_KEY, voiceMan
 const videoService = new VideoService(speechService);
 
 // Middleware setup
-app.use(express.json());      // Parse JSON request bodies
-app.use(express.static('public')); // Serve static files from 'public' directory
+app.use(express.json());
+app.use(express.static('public'));
 app.use('/config.json', express.static(path.join(__dirname, 'config.json')));
 
-// API Routes
-
-/**
- * Generate a text description of a historical event in a specific style
- * Request body: { event, style }
- */
+// API Routes (these stay exactly the same)
 app.post('/api/describe-event', async (req, res) => {
     const { event, style } = req.body;
     try {
@@ -45,10 +38,6 @@ app.post('/api/describe-event', async (req, res) => {
     }
 });
 
-/**
- * Generate the first image for an event
- * Request body: { event }
- */
 app.post('/api/generate-image', async (req, res) => {
     const { event } = req.body;
     try {
@@ -63,10 +52,6 @@ app.post('/api/generate-image', async (req, res) => {
     }
 });
 
-/**
- * Generate a complementary second image using context from first image
- * Request body: { event, firstImagePrompt }
- */
 app.post('/api/generate-image2', async (req, res) => {
     const { event, firstImagePrompt } = req.body;
     try {
@@ -80,17 +65,11 @@ app.post('/api/generate-image2', async (req, res) => {
         });
         res.status(500).json({
             error: "Failed to generate second image",
-            details: error.response?.data || error.message,
-            suggestion: "The content might have triggered DALL-E's safety filters. Try a different event description."
+            details: error.response?.data || error.message
         });
     }
 });
 
-
-/**
- * Generate a video combining images, audio, and subtitles
- * Request body: { imageUrl, imageUrl2, text, style }
- */
 app.post('/api/generate-video', async (req, res) => {
     const { imageUrl, imageUrl2, text, style } = req.body;
     
@@ -107,7 +86,6 @@ app.post('/api/generate-video', async (req, res) => {
     }
 });
 
-// Start the server on configured port
 app.listen(PORT, () => {
     console.log(`\n🚀 Server running on http://localhost:${PORT}`);
 });
