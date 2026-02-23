@@ -15,10 +15,14 @@ class SpeechService {
         console.log('Text to synthesize:', text);
 
         try {
-            const { voiceId, params } = this.voiceManager.getVoiceSettings(style);
+            // Use getVoiceSettings which now exists
+            const { voiceId, params } = await this.voiceManager.getVoiceSettings(style);
             
             // Build URL using config
             const url = `${ELEVENLABS_CONFIG.BASE_URL}${ELEVENLABS_CONFIG.ENDPOINTS.text_to_speech_with_timestamps.replace('{voice_id}', voiceId)}`;
+
+            console.log(`📤 Sending request to ElevenLabs with voice: ${voiceId}`);
+            console.log('📊 Voice parameters:', params);
 
             const response = await axios.post(
                 url,
@@ -46,7 +50,7 @@ class SpeechService {
             };
 
         } catch (error) {
-            console.error("ElevenLabs TTS Error:", error.response?.data || error.message);
+            console.error("❌ ElevenLabs TTS Error:", error.response?.data || error.message);
             throw new Error(`Speech generation failed: ${error.message}`);
         }
     }

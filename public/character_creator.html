@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History Tellers - Character Creator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="creator.css">
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+</head>
+<body>
+    <div class="character-creator-container">
+       <div class="top-bar">
+            <a href="javascript:void(0)" onclick="goBack()" class="back-link">← Back to History Tellers</a>
+        </div>
+        
+        <div class="creator-header">
+            <h2>Character Creator</h2>
+            <button class="new-character-btn" onclick="openCreateModal()">+ Create New Character</button>
+        </div>
+
+        <div id="charactersGrid" class="characters-grid">
+            <!-- Characters will be loaded here dynamically -->
+            <div class="empty-state" id="emptyState">
+                <p>No custom characters yet. Create your first character!</p>
+                <button class="create-first-btn" onclick="openCreateModal()">+ Create First Character</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Character Edit/Create Modal -->
+    <div id="characterModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Create New Character</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <form id="characterForm" onsubmit="saveCharacter(event)">
+                <input type="hidden" id="characterId" value="">
+                
+                <div class="form-group">
+                    <label for="characterKey">Character Key (unique identifier, e.g., 'my_custom_voice')</label>
+                    <input type="text" id="characterKey" required pattern="[a-z_]+" title="Lowercase letters and underscores only">
+                </div>
+                
+                <div class="form-group">
+                    <label for="characterName">Display Name</label>
+                    <input type="text" id="characterName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="characterImage">Image Source (path or URL)</label>
+                    <input type="text" id="characterImage" required placeholder="e.g., images/my_character.png">
+                </div>
+                
+                <div class="form-group">
+                    <label for="characterDescription">Description</label>
+                    <textarea id="characterDescription" required placeholder="Brief description of the character's voice/personality"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="voiceId">ElevenLabs Voice ID</label>
+                    <input type="text" id="voiceId" required placeholder="e.g., mpgCuHlOy4oRiOklMDQ6">
+                    <div class="voice-id-hint">You can get voice IDs from your ElevenLabs account</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="stability">Stability (0.0 - 1.0)</label>
+                    <input type="number" id="stability" min="0" max="1" step="0.1" value="0.7" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="similarityBoost">Similarity Boost (0.0 - 1.0)</label>
+                    <input type="number" id="similarityBoost" min="0" max="1" step="0.1" value="0.8" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="speed">Speed (0.0 - 2.0)</label>
+                    <input type="number" id="speed" min="0" max="2" step="0.1" value="0.9" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="promptTemplate">Prompt Template (how the character should speak)</label>
+                    <textarea id="promptTemplate" required placeholder="Describe how this character talks, their mannerisms, slang, etc."></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save Character</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Success Modal (no buttons) -->
+    <div id="saveSuccessModal" class="modal">
+        <div class="modal-content small">
+            <div class="modal-header">
+                <h3>Success!</h3>
+            </div>
+            <div class="save-content">
+                <p id="successMessage">✓ Character saved</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="creator.js"></script>
+</body>
+</html>

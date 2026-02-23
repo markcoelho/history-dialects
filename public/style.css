@@ -206,3 +206,38 @@ button:hover, .download-btn:hover {
 @media (min-width: 1920px) {
   .style-grid { grid-template-columns: repeat(4, 1fr); } /* 4 columns on ultra-wide */
 }
+
+
+
+/* Character header with "or create new" */
+.character-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.or-text {
+  font-size: 14px;
+  color: rgba(245, 245, 245, 0.6);
+  font-style: italic;
+}
+
+.small-create-btn {
+  background: none;
+  border: none;
+  color: whitesmoke;
+  font-size: 14px;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+  padding: 0;
+  width: auto;
+  font-weight: normal;
+}
+
+.small-create-btn:hover {
+  background: none;
+  color: rgba(245, 245, 245, 0.8);
+  text-decoration-style: solid;
+}

@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Historical Event Describer</title>
     <link rel="stylesheet" href="style.css" />
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
   </head>
   <body>
     <header>
@@ -28,11 +30,21 @@
 
             <div class="input-group">
               <label for="style">Pick someone to explain</label>
+
+                <div class="character-header">
+                  <span class="or-text">or</span>
+                  <button type="button" class="small-create-btn" onclick="window.location.href='character_creator.html'">
+                    create a new character
+                  </button>
+                </div>
+
               <div class="scrollable-container">
                 <div class="style-grid" id="styleGrid">
                   <!-- Style options will be dynamically loaded from config.json -->
                 </div>
               </div>
+
+              
               <input type="hidden" id="style" name="style" required />
             </div>
 

@@ -1,22 +1,28 @@
 // services/textService.js - Handles text generation using DeepSeek API with various narrative styles
 
 const axios = require('axios');
-const { DEEPSEEK_CONFIG, TEXT_GENERATION_CONFIG, RAW_CONFIG } = require('../config/constants');
+const { DEEPSEEK_CONFIG, TEXT_GENERATION_CONFIG } = require('../config/constants');
+const fs = require('fs').promises;
+const path = require('path');
 
 class TextService {
-    constructor(apiKey) {
+    constructor(apiKey, voiceManager) {
         this.apiKey = apiKey;
+        this.voiceManager = voiceManager; // Inject VoiceManager for fresh config
     }
 
     async describeEvent(event, style) {
-        const prompt = this.buildPrompt(event, style);
-        
-        console.log('\n=== TEXT GENERATION PROMPT ===');
-        console.log('Event:', event);
-        console.log('Style:', style);
-        console.log('Full Prompt:', prompt);
-        
         try {
+            // Get fresh voice config from VoiceManager (reads file every time)
+            const voiceConfig = await this.voiceManager.getVoice(style);
+            
+            const prompt = this.buildPrompt(event, voiceConfig);
+            
+            console.log('\n=== TEXT GENERATION PROMPT ===');
+            console.log('Event:', event);
+            console.log('Style:', style);
+            console.log('Full Prompt:', prompt);
+            
             const response = await axios.post(DEEPSEEK_CONFIG.BASE_URL, {
                 model: DEEPSEEK_CONFIG.MODEL,
                 messages: [{
@@ -44,16 +50,9 @@ class TextService {
         }
     }
 
-    buildPrompt(event, style) {
-        // Get the voice config for the selected style
-        const voiceConfig = RAW_CONFIG.voices[style];
-        
-        if (!voiceConfig) {
-            throw new Error(`Unknown style: ${style}`);
-        }
-
-        // Build prompt using the template from config
-        let prompt = `Describe "${event}" in this mode/style: ${style}.\n` +
+    buildPrompt(event, voiceConfig) {
+        // Build prompt using the template from fresh config
+        let prompt = `Describe "${event}" in this mode/style.\n` +
                     `${TEXT_GENERATION_CONFIG.BASE_RULES}\n` +
                     `${voiceConfig.prompt_template}`;
 
