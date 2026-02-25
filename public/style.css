@@ -1,213 +1,514 @@
 /* public/style.css - Stylesheet for Historical Event Describer */
+* {
+  box-sizing: border-box; /* Ensure padding and borders are included in element's total width and height */
+  margin: 0; /* Remove default margin */
+  padding: 0; /* Remove default padding */
+  scroll-behavior: smooth; /* enable smooth scroll in page */
+}
+
+main {
+  margin: 80px 100px 0 100px; /* push content below fixed header */
+  padding: 20px; /* Fade-in animation on load */
+}
+
+main h1 {
+  font:
+    bold 30px "DMSerifDisplay",
+    serif;
+  text-align: left;
+}
 
 /* Base Styles - applied to entire document */
 body {
-  font-family: Arial, sans-serif;      /* Clean, readable font */
-  margin: 0 100px;                     /* Horizontal margin on larger screens */
-  padding: 20px;                       /* Inner spacing */
-  text-align: center;                   /* Center-align text by default */
-  background: black;                    /* Dark background */
-  color: whitesmoke;                    /* Light text for contrast */
-  animation: fadeIn 1s ease-in-out;      /* Fade-in animation on page load */
+  font-family: Arial, sans-serif; /* Clean, readable font */
+  text-align: center; /* Center-align text by default */
+  background: black; /* Dark background */
+  color: whitesmoke; /* Light text for contrast */
+  animation: fadeIn 1s ease-in-out; /* Fade-in animation on page load */
+}
+
+.banner-container {
+  position: absolute; /* Position absolutely to cover the area */
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* allow height to adjust so entire image is visible */
+  overflow: hidden;
+  z-index: -1; /* Place behind other content */
+  opacity: 0.5; /* Semi-transparent for subtle effect */
+}
+
+.banner-container img {
+  width: 100%; /* Full width of container */
+  height: auto; /* allow natural height so entire image is shown */
+  object-fit: contain; /* show the whole image without cropping */
+  display: block; /* remove inline gaps */
+  filter: blur(0); /* default no blur */
+  transition: filter 0.3s ease-in-out; /* ensure smooth transition both ways */
+}
+
+/* dark gradient overlay from bottom up */
+.banner-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* let clicks pass through */
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0) 20%
+  );
 }
 
 /* Layout - Two-column main container */
 .main-container {
-  display: flex;                        /* Flexbox layout */
-  gap: 20px;                            /* Space between columns */
-  animation: fadeIn 1s ease-in-out;      /* Fade-in animation */
+  display: flex; /* Flexbox layout */
+  gap: 20px; /* Space between columns */
+  animation: fadeIn 1s ease-in-out;
+  margin: 0 0 30px 0; /* Fade-in animation */
 }
 
-.left-column, .right-column {
-  flex: 2;                              /* Both columns take equal width */
-}
-
+.left-column,
 .right-column {
-  margin-left: 30px;                    /* Additional left margin */
-  padding: 15px;                         /* Inner spacing */
-  background: #f9f9f9;                   /* Light background for contrast */
-  border-radius: 4px;                    /* Slightly rounded corners */
-  min-height: 300px;                     /* Minimum height for empty state */
+  justify-content: left;
+  flex: 2; /* Both columns take equal width */
+  text-align: left;
+}
+
+.ShortVideo {
+  width: 100%;
+  height: auto;
+  margin-left: 30px; /* Additional left margin */
+  padding: 15px;
+  border-radius: 20px; /* Slightly rounded corners */
+  border: whitesmoke 1px solid; /* Light border */
 }
 
 /* Header section */
 header {
-  display: flex;                         /* Flex layout for header items */
-  align-items: center;                   /* Vertically center items */
-  justify-content: space-between;         /* Space between title and paragraphs */
-  text-align: left;                      /* Left-align text */
-  animation: fadeIn 1s ease-in-out;       /* Fade-in animation */
+  position: fixed; /* stay visible while scrolling */
+  top: 0;
+  left: 0;
+  width: 100%; /* span full viewport width */
+  z-index: 2;
+  padding: 30px; /* Inner padding */
+  display: flex; /* Flex layout for header items */
+  align-items: center; /* Vertically center items */
+  justify-content: space-between; /* Space between title and paragraphs */
+  text-align: left; /* Left-align text */
+  animation: fadeIn 1s ease-in-out;
+  color: whitesmoke; /* Fade-in animation */
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+a {
+  text-decoration: none;
+}
+
+.intro {
+  /* Left-align intro text */
+  margin: 300px 0 300px 0;
+  justify-items: center; /* Space below intro */
+}
+
+.intro p {
+  font:
+    30px "DMSerifDisplay",
+    serif; /* Custom font with fallback */
+  width: 100%; /* Fixed width for better readability */
+  color: whitesmoke; /* Small text */
+  transition: filter 0.3s ease-in-out;
+  cursor: pointer; /* indicate it's interactive */
+  font-style: italic;
+}
+
+/* class added by JS on hover to blur background image */
+.banner-container.blur img {
+  filter: blur(10px);
 }
 
 header h1 {
-  font: bold 36px 'DMSerifDisplay', serif; /* Custom font with fallback */
-  text-transform: uppercase;              /* All caps */
-  margin-right: 80px;                     /* Space after title */
+  font:
+    bold 20px "DMSerifDisplay",
+    serif; /* Custom font with fallback */
+  text-transform: uppercase; /* All caps */
+  margin-right: 80px; /* Space after title */
 }
 
 header p {
-  width: 200px;                           /* Fixed width for description */
-  font-size: 12px;                        /* Small text */
+  /* Fixed width for description */
+  font-size: 15px;
+  color: whitesmoke; /* Small text */
+}
+
+header .nav-links {
+  display: flex;
+  gap: 40px; /* Space between nav links */
+}
+
+/* underline animation on header links - limited to text width */
+header .nav-links a {
+  position: relative;
+  color: whitesmoke;
+  display: inline-block; /* shrink to content */
+  padding: 10px 20px; /* clickable area remains */
+  text-align: center; /* center text within */
+}
+
+header .nav-links a p {
+  display: inline-block;
+  position: relative;
+  text-align: center;
+}
+
+header .nav-links a p::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 2px;
+  width: 0;
+  background: whitesmoke;
+  transition: width 0.3s ease;
+}
+
+header .nav-links a:hover p::after,
+header .nav-links a:focus p::after {
+  width: 100%;
+}
+
+header .nav-links a:hover::after,
+header .nav-links a:focus::after {
+  width: 100%;
+}
+
+/* burger menu toggle button */
+.menu-toggle {
+  display: none; /* hidden normally */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 24px;
+  padding: 0;
+  -webkit-appearance: none; /* remove default styles in Safari */
+  margin-left: auto; /* push right edge in header flex */
+}
+.menu-toggle:hover,
+.menu-toggle:focus {
+  background: transparent;
+  outline: none;
+}
+.menu-toggle span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: whitesmoke;
+  /* no transition here to keep hover static */
+}
+.menu-toggle.open span {
+  transition:
+    transform 0.3s ease,
+    opacity 0.3s ease;
+}
+.menu-toggle.open span:nth-child(1) {
+  transform: translateY(10px) rotate(45deg);
+}
+.menu-toggle.open span:nth-child(2) {
+  opacity: 0;
+}
+.menu-toggle.open span:nth-child(3) {
+  transform: translateY(-10px) rotate(-45deg);
+}
+
+@media (max-width: 768px) {
+  header .nav-links {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: rgba(0, 0, 0, 0.8);
+    flex-direction: column;
+    width: 100%;
+    max-height: 0; /* collapsed by default */
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.3s ease;
+  }
+  header .nav-links.open {
+    max-height: 300px; /* large enough to contain links */
+    opacity: 1;
+  }
+  header .nav-links a {
+    padding: 10px 20px;
+  }
+  .menu-toggle {
+    display: flex;
+  }
+  main {
+    margin: 100px 0 100px 0;
+    padding: 10px;
+  }
+}
+
+/* additional responsive tweaks for smaller screens */
+@media (max-width: 768px) {
+  header {
+    padding: 15px;
+  }
+  header h1 {
+    font-size: 20px;
+  }
+  .intro {
+    margin: 100px 0 300px 0;
+  }
+  .intro p {
+    font-size: 24px;
+    width: 80%;
+  }
+  .main-container {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .left-column,
+  .right-column {
+    flex: none;
+    width: 100%;
+  }
+  .ShortVideo {
+    width: 100%;
+    height: auto;
+    margin-left: 0;
+  }
+  .style-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .history-video,
+  .history-image {
+    max-width: 100%;
+  }
+  /* make banner larger on mobile: ensure at least 60vh visible */
+  .banner-container {
+    min-height: 90vh;
+  }
+  .banner-container img {
+    height: auto;
+    min-height: 90vh;
+    object-fit: cover; /* zoom to fill the min-height area */
+  }
+}
+
+@media (max-width: 480px) {
+  .intro p {
+    font-size: 18px;
+    width: 90%;
+  }
+  .style-grid {
+    grid-template-columns: 1fr;
+  }
+  header h1 {
+    font-size: 18px;
+  }
+  header {
+    padding: 10px;
+  }
+}
+
+/* give anchors an offset below fixed header */
+.main-container {
+  scroll-margin-top: 100px; /* avoid header covering target */
 }
 
 /* Form Elements */
 .input-group {
-  margin: 20px 0;                         /* Vertical spacing between groups */
-  text-align: left;                       /* Left-align labels and inputs */
+  margin: 20px 0; /* Vertical spacing between groups */
+  text-align: left; /* Left-align labels and inputs */
 }
 
 label {
-  display: block;                         /* Labels on their own line */
-  margin-bottom: 10px;                     /* Space below label */
-  font-size: 20px;                         /* Larger label text */
-  font-weight: lighter;                    /* Light font weight */
+  display: block; /* Labels on their own line */
+  margin-bottom: 10px; /* Space below label */
+  font-weight: lighter; /* Light font weight */
 }
 
 input {
-  width: 100%;                             /* Full width inputs */
-  padding: 10px;                            /* Inner padding */
-  border: 1px solid whitesmoke;             /* Light border */
-  border-radius: 5rem;                      /* Pill-shaped input */
-  font-size: 16px;                          /* Readable text size */
-  background: none;                          /* Transparent background */
-  color: whitesmoke;                         /* Light text */
+  width: 100%; /* Full width inputs */
+  padding: 10px; /* Inner padding */
+  border: 1px solid #d9d9d9; /* Light border */
+  border-radius: 5rem; /* Pill-shaped input */
+  font-size: 16px; /* Readable text size */
+  background: none; /* Transparent background */
+  color: whitesmoke; /* Light text */
 }
 
 .scrollable-container {
-  width: 100%;                               /* Full width */
-  overflow-y: auto;                           /* Vertical scroll if needed */
-  padding: 5px;                               /* Inner spacing */
+  width: 100%; /* Full width */
+  height: 500px;
+  overflow-y: auto; /* Vertical scroll if needed */
+  padding: 10px 20px 10px 20px; /* Inner padding */
+  border: 1px solid #d9d9d9;
+  border-radius: 20px; /* Inner spacing */
+  /* hide scrollbar while still allowing scroll */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Webkit browsers */
+.scrollable-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 /* Style Grid - for character selection */
 .style-grid {
-  display: grid;                             /* Grid layout */
-  grid-template-columns: repeat(3, 1fr);     /* 3 equal columns */
-  gap: 5px;                                   /* Small gap between items */
-  margin-top: 10px;                           /* Space above grid */
+  display: grid; /* Grid layout */
+  grid-template-columns: repeat(3, 1fr); /* 3 equal columns */
+  gap: 5px; /* Small gap between items */
+  margin-top: 10px; /* Space above grid */
 }
 
 .style-option {
-    position: relative;                       /* For potential overlay positioning */
-    width: 100%;                               /* Full width of grid cell */
-    height: fit-content;                       /* Height matches content */
-    overflow: hidden;                          /* Hide overflow */
-    cursor: pointer;                           /* Clickable appearance */
-    transition: transform 0.2s, opacity 0.2s ease-in-out; /* Smooth animations */
-    opacity: 0.5;                               /* Half opacity by default */
-    outline: none;                              /* Remove focus outline */
-    animation: fadeIn 0.5s ease-in-out;          /* Staggered fade-in */
-    animation-delay: calc(var(--order) * 0.1s);  /* Delay based on order */
-    animation-fill-mode: both;                   /* Keep final animation state */
+  position: relative; /* For potential overlay positioning */
+  width: 100%; /* Full width of grid cell */
+  height: fit-content; /* Height matches content */
+  overflow: hidden; /* Hide overflow */
+  cursor: pointer; /* Clickable appearance */
+  transition:
+    transform 0.2s,
+    opacity 0.2s ease-in-out; /* Smooth animations */
+  opacity: 0.8; /* Half opacity by default */
+  outline: none; /* Remove focus outline */
+  animation: fadeIn 0.5s ease-in-out; /* Staggered fade-in */
+  animation-delay: calc(var(--order) * 0.1s); /* Delay based on order */
+  animation-fill-mode: both; /* Keep final animation state */
 }
 
 .style-option img {
-    position: relative;                          /* Maintain positioning */
-    border-radius: 10%;                          /* Slightly rounded corners */
-    width: 100%;                                  /* Full width of container */
-    height: auto;                                  /* Maintain aspect ratio */
-    object-fit: cover;                             /* Cover container without distortion */
-    transition: border 0.2s ease-in-out;           /* Smooth border transition */
-    border: 2px solid transparent;                  /* Invisible border (prepares for hover) */
+  position: relative; /* Maintain positioning */
+  border-radius: 10%; /* Slightly rounded corners */
+  width: 100%; /* Full width of container */
+  height: auto; /* Maintain aspect ratio */
+  object-fit: cover; /* Cover container without distortion */
+  transition: border 0.2s ease-in-out; /* Smooth border transition */
+  border: 2px solid transparent; /* Invisible border (prepares for hover) */
 }
 
 /* Hover and selected states */
-.style-option:hover, .style-option.selected {
-  transform: scale(1.05);                        /* Slight enlargement */
-  opacity: 1 !important;                          /* Full opacity (override) */
+.style-option:hover,
+.style-option.selected {
+  transform: scale(1.05); /* Slight enlargement */
+  opacity: 1 !important; /* Full opacity (override) */
 }
 
 .style-option.selected img {
-    border: 2px solid white;                      /* White border for selected state */
-    box-sizing: border-box;                        /* Border doesn't affect dimensions */
+  border: 2px solid white; /* White border for selected state */
+  box-sizing: border-box; /* Border doesn't affect dimensions */
 }
 
 /* Buttons - consistent styling */
-button, .download-btn {
-  width: 100%;                                    /* Full width */
-  padding: 10px 20px;                              /* Comfortable padding */
-  background: black;                                /* Dark background */
-  color: whitesmoke;                                /* Light text */
-  border: 1px solid whitesmoke;                     /* Light border */
-  border-radius: 4px;                                /* Slightly rounded */
-  font-size: 16px;                                   /* Readable text */
-  cursor: pointer;                                    /* Pointer on hover */
-  transition: background-color 0.3s;                  /* Smooth hover transition */
+main button,
+.download-btn {
+  width: 100%; /* Full width */
+  padding: 10px 20px; /* Comfortable padding */
+  background: black; /* Dark background */
+  color: whitesmoke; /* Light text */
+  border: 1px solid whitesmoke; /* Light border */
+  border-radius: 4px; /* Slightly rounded */
+  font-size: 16px; /* Readable text */
+  cursor: pointer; /* Pointer on hover */
+  transition: background-color 0.3s; /* Smooth hover transition */
 }
 
-button:hover, .download-btn:hover {
-  background: whitesmoke;                             /* Invert colors on hover */
+button:hover,
+.download-btn:hover {
+  background: whitesmoke; /* Invert colors on hover */
   color: black;
 }
 
 /* Results area - where generated content appears */
 #result {
-  margin-top: 20px;                                   /* Space above */
-  padding: 15px;                                      /* Inner padding */
-  background: whitesmoke;                              /* Light background */
-  border: 1px solid #ddd;                              /* Subtle border */
-  border-radius: 4px;                                  /* Rounded corners */
-  min-height: 50px;                                    /* Minimum height */
-  text-align: left;                                     /* Left-align text content */
+  margin-top: 20px; /* Space above */
+  padding: 15px; /* Inner padding */
+  min-height: 50px; /* Minimum height */
+  text-align: left; /* Left-align text content */
+  margin-left: 0;
 }
 
 /* Images and videos */
-.history-image, .history-video {
-  max-width: 100%;                                     /* Responsive sizing */
-  border-radius: 8px;                                   /* Rounded corners */
-  margin: 15px 0;                                        /* Vertical spacing */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);                 /* Subtle shadow */
+.history-image,
+.history-video {
+  max-width: 100%; /* Responsive sizing */
+  border-radius: 8px; /* Rounded corners */
+  margin: 15px 0; /* Vertical spacing */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }
 
 .history-video {
-  max-width: 400px;                                     /* Limit video width */
-  background: #000;                                      /* Black background */
+  max-width: 400px; /* Limit video width */
+  background: #000; /* Black background */
 }
 
 /* Utility classes */
 .spinner {
-  width: 40px;                                          /* Fixed size */
+  width: 40px; /* Fixed size */
   height: 40px;
-  margin: 20px auto;                                    /* Centered */
-  border: 4px solid rgba(0,0,0,0.1);                     /* Light gray border */
-  border-top-color: #09f;                                /* Blue top border */
-  border-radius: 50%;                                    /* Circle shape */
-  animation: spin 1s linear infinite;                     /* Spinning animation */
+  margin: 20px auto; /* Centered */
+  border: 4px solid rgba(0, 0, 0, 0.1); /* Light gray border */
+  border-top-color: #09f; /* Blue top border */
+  border-radius: 50%; /* Circle shape */
+  animation: spin 1s linear infinite; /* Spinning animation */
 }
 
-.error, .error-alert {
-  color: #d32f2f;                                        /* Red error color */
-  margin: 10px 0;                                         /* Vertical spacing */
+.error,
+.error-alert {
+  color: #d32f2f; /* Red error color */
+  margin: 10px 0; /* Vertical spacing */
 }
 
 .error-alert {
-  font-size: 24px;                                       /* Large emoji/icon */
-  text-align: center;                                     /* Centered */
+  font-size: 24px; /* Large emoji/icon */
+  text-align: center; /* Centered */
 }
 
-.text-output{
+.text-output {
   display: none;
 }
-.image-grid{
-  display:none;
+.image-grid {
+  display: none;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }      /* Start hidden and below */
-  to { transform: translateY(0); }                        /* End at normal position */
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  } /* Start hidden and below */
+  to {
+    transform: translateY(0);
+  } /* End at normal position */
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }                       /* Full rotation */
+  to {
+    transform: rotate(360deg);
+  } /* Full rotation */
 }
 
 /* Responsive adjustments */
 @media (min-width: 1920px) {
-  .style-grid { grid-template-columns: repeat(4, 1fr); } /* 4 columns on ultra-wide */
+  .style-grid {
+    grid-template-columns: repeat(4, 1fr);
+  } /* 4 columns on ultra-wide */
 }
-
-
 
 /* Character header with "or create new" */
 .character-header {

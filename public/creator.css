@@ -1,5 +1,4 @@
 /* Character Creator specific styles */
-
 .character-creator-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -52,7 +51,7 @@
 }
 
 .new-character-btn:hover {
-    background: rgba(245, 245, 245, 0.1);
+    background: whitesmoke;
     border: 2px solid whitesmoke;
     transform: translateY(-2px);
 }
@@ -416,10 +415,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    body {
-        margin: 0 20px;
-    }
-    
     .character-creator-container {
         padding: 10px;
     }

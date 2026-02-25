@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,54 +6,65 @@
     <title>Historical Event Describer</title>
     <link rel="stylesheet" href="style.css" />
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>"
+    />
   </head>
   <body>
     <header>
       <h1>History Tellers</h1>
-      <p>Learn about any historical event with different characters and dialects</p>
-      <p>Computational Creativity for Design 2025</p>
+      <button class="menu-toggle" aria-label="Toggle menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <div class="nav-links">
+        <a href="index.html"><p>Home</p></a>
+        <a href="character_creator.html"><p>Characters</p></a>
+      </div>
     </header>
     <main>
-      <div class="main-container">
-        <div class="left-column">
-          <form id="eventForm">
-            <div class="input-group">
-              <label for="event">Write an Event or Person from History:</label>
-              <input
-                type="text"
-                id="event"
-                placeholder="E.g., Moon Landing, French Revolution, Cleopatra, ..."
-                required
-              />
-            </div>
-
-            <div class="input-group">
-              <label for="style">Pick someone to explain</label>
-
-                <div class="character-header">
-                  <span class="or-text">or</span>
-                  <button type="button" class="small-create-btn" onclick="window.location.href='character_creator.html'">
-                    create a new character
-                  </button>
-                </div>
-
-              <div class="scrollable-container">
-                <div class="style-grid" id="styleGrid">
-                  <!-- Style options will be dynamically loaded from config.json -->
-                </div>
-              </div>
-
-              
-              <input type="hidden" id="style" name="style" required />
-            </div>
-
-            <button type="submit">Describe Event</button>
-          </form>
+      <div class="banner-container">
+        <img src="images/Banner.png" alt="Scroll Image" class="scroll-image" />
+      </div>
+      <div class="intro">
+        <p>"Historical events through the lens of unique characters"</p>
+      </div>
+      <div class="video-creator">
+        <h1>Create a video</h1>
+        <div class="input-group">
+          <label for="event">Write an Event or Person from History</label>
+          <input
+            type="text"
+            id="event"
+            placeholder="E.g., Moon Landing, French Revolution, Cleopatra, ..."
+            required
+          />
         </div>
+        <div class="main-container">
+          <div class="left-column">
+            <label for="event">Choose a Character</label>
+            <form id="eventForm">
+              <div class="input-group">
+                <div class="scrollable-container">
+                  <div class="style-grid" id="styleGrid">
+                    <!-- Style options will be dynamically loaded from config.json -->
+                  </div>
+                </div>
 
-        <div class="right-column" id="result">
-          <!-- Result will be dynamically inserted here by script.js -->
+                <input type="hidden" id="style" name="style" required />
+              </div>
+            </form>
+            <button type="submit">Generate video</button>
+          </div>
+
+          <div class="right-column">
+            <label for="event">Whatch your video here</label>
+            <div class="ShortVideo" id="result">
+              <!-- Result will be dynamically inserted here by script.js -->
+            </div>
+          </div>
         </div>
       </div>
     </main>
